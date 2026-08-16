@@ -4,7 +4,6 @@ import { ref, shallowRef } from "vue";
 import { isEmpty } from "es-toolkit/compat";
 import { jsZipBlobToBackupData } from "@ptd/backupServer/utils.ts";
 import type { IBackupData } from "@ptd/backupServer";
-import { useRouter } from "vue-router";
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
@@ -13,7 +12,6 @@ import { BackupFields, type TBackupFields, type IRestoreOptions } from "@/shared
 
 const showDialog = defineModel<boolean>();
 const { t } = useI18n();
-const router = useRouter();
 
 type TRestoreMetaData = { type: "file" } | { type: "remote"; server: string; path: string };
 
@@ -195,11 +193,6 @@ function resetDialog() {
     loadRemoteBackupFile();
   }
 }
-
-function goToPtppImport() {
-  router.push({ name: "SetBaseBackup" });
-  showDialog.value = false;
-}
 </script>
 
 <template>
@@ -212,14 +205,6 @@ function goToPtppImport() {
       </v-card-title>
       <v-divider />
       <v-card-text>
-        <v-alert class="mb-3" type="info" variant="tonal">
-          <span>{{ t("SetBackup.RestoreDialog.ptppPrompt") }}</span>
-          <template #append>
-            <v-btn color="primary" size="small" variant="outlined" prepend-icon="mdi-import" @click="goToPtppImport">
-              {{ t("SetBackup.RestoreDialog.ptppImport") }}
-            </v-btn>
-          </template>
-        </v-alert>
         <v-window v-model="currentStep">
           <v-window-item value="file" eager>
             <v-file-input

@@ -67,7 +67,7 @@ export async function getSiteUserInfoResult(siteId: string) {
       let maxDate = null;
       for (const date in userInfoSite) {
         if (
-          userInfoSite[date].status === EResultParseStatus.success && // 如果是 PTPP 导入，可能存在 status 为 unknownError 的情况
+          userInfoSite[date].status === EResultParseStatus.success &&
           (!maxDate || new Date(date) > new Date(maxDate))
         ) {
           maxDate = date;

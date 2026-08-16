@@ -456,8 +456,6 @@
       "keepExistUserInfo": "保留本地已获取过的用户信息",
       "loadFailure": "加载失败: {error}",
       "missingVersion": "备份数据缺少版本信息，无法恢复",
-      "ptppImport": "PT-Plugin-Plus 备份导入",
-      "ptppPrompt": "需要导入 PT-Plugin-Plus 备份？",
       "restoreOptions": "恢复选项",
       "retry": "重试",
       "selectFile": "选择备份文件",
@@ -493,6 +491,13 @@
     }
   },
   "SetBase": {
+    "backup": {
+      "basicConfig": "基本配置",
+      "encryptionKeyLabel": "备份文件加密、解密密钥",
+      "randomGenTitle": "随机生成",
+      "saveKeyNotice": "注意：密钥仅保存在当前浏览器，不会备份，请妥善保存；加密后如密钥丢失将无法恢复数据。留空表示不做加密。",
+      "undoKeyTitle": "恢复上一个密钥"
+    },
     "download": {
       "allowDirectSendToClient": "是否允许直接将链接（而不是种子文件）发送到下载服务器（如非必要请勿启用）",
       "enableSiteFilter": "启用站点过滤器（启用后可在下载器设置中配置每个下载器可使用的站点）",
@@ -1117,34 +1122,6 @@
     "searchPlanAll": "全部站点",
     "searchPlanDefault": "默认",
     "searchPlanSingleSite": "单个站点"
-  },
-  "ptppSettings": {
-    "RestorePtppUserDataDialog": {
-      "importCancelled": "导入操作已取消。",
-      "importFailure": "导入失败。",
-      "importSuccess": "导入成功，窗口将在 5s 后自动关闭，请刷新页面。",
-      "noSiteWarning": "你似乎还没有添加任何站点，这可能导致导入异常，是否继续？",
-      "notSupported": "该站点暂不支持",
-      "overwriteExisting": "是否覆盖已有数据",
-      "pendingImportData": "待导入数据",
-      "recordCount": "{0}条",
-      "selected": "已选择",
-      "title": "恢复 PT-Plugin-Plus 的用户历史数据信息"
-    },
-    "basicConfig": "基本配置",
-    "encryptionKeyLabel": "备份文件加密、解密密钥",
-    "importConfigInfoLine1": "{repoName} 只能导入原 PT-Plugin-Plus 的用户历史数据信息，其他配置文件不支持导入。",
-    "importConfigInfoPrep": "在导入之前，请做好以下准备：",
-    "importConfigTitle": "PT-Plugin-Plus 配置导入",
-    "importStep1": "请先备份好当前 {repoName} 的配置文件。",
-    "importStep2": "在 {repoName} 的站点设置中添加需要恢复的站点。（如果没有添加站点，对应的用户历史数据会被忽略）",
-    "importStep3": "在 PT-Plugin-Plus 中，关闭备份加密功能，并导出本地备份文件。其应该是一个名为 <code>PT-Plugin-Plus-Backup-yyyy-MM-DD_hh-mm-ss.zip</code> 的 zip 压缩文件。",
-    "importStep4": "将压缩包或者从压缩包中解压出的 <code>userdatas.json</code> 文件，上传到下面的输入框中。",
-    "invalidFileFormat": "文件格式错误，请检查是否按正确步骤（关闭备份加密功能）导出备份。",
-    "randomGenTitle": "随机生成",
-    "saveKeyNotice": "注意：密钥仅保存在当前浏览器，不会备份，请妥善保存；加密后如密钥丢失将无法恢复数据。留空表示不做加密。",
-    "selectBackupFile": "选择 PTPP 备份文件",
-    "undoKeyTitle": "恢复上一个密钥"
   },
   "resultParseStatus": {
     "CFBlocked": "CloudFlare 错误！",

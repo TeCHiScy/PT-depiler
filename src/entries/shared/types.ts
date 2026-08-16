@@ -7,7 +7,6 @@ import type { TBackupFields } from "./types/storages/metadata.ts";
 // 代理转发所有 types 导出
 export * from "./types/extends.ts";
 export * from "./types/common/download.ts";
-export * from "./types/common/ptpp.ts";
 export * from "./types/common/nativeBridge.ts";
 export * from "./types/storages/config.ts";
 export * from "./types/storages/indexdb.ts";
