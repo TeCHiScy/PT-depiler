@@ -4,10 +4,8 @@ import { useI18n } from "vue-i18n";
 import type { TSiteID } from "@ptd/site";
 import type { DataTableHeader } from "vuetify";
 
-import { sendMessage } from "@/messages.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
-import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 
 import EditDialog from "./EditDialog.vue";
@@ -23,7 +21,6 @@ import { allAddedSiteInfo, type ISiteTableItem } from "./utils.ts";
 const { t } = useI18n();
 
 const configStore = useConfigStore();
-const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
 
 const showEditDialog = ref<boolean>(false);
@@ -89,15 +86,6 @@ function editSite(siteId: TSiteID) {
   toEditId.value = siteId;
   showEditDialog.value = true;
 }
-
-const isFaviconFlushing = ref(false);
-async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
-  const siteIds = Array.isArray(siteId) ? siteId : [siteId];
-  for (const id of siteIds) {
-    await sendMessage("getSiteFavicon", { site: id, flush: true });
-  }
-  runtimeStore.showSnakebar(t("SetSite.index.flushFaviconFinish"), { color: "success" });
-}
 </script>
 
 <template>
@@ -112,15 +100,6 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
         />
 
         <v-divider class="mx-2" inset vertical />
-
-        <NavButton
-          :disabled="tableSelected.length === 0"
-          :loading="isFaviconFlushing"
-          :text="t('SetSite.index.table.flushFavicon')"
-          color="indigo"
-          icon="mdi-face-recognition"
-          @click="() => flushSiteFavicon(tableSelected)"
-        />
 
         <NavButton
           :text="t('SetSite.index.reBuildMap')"
@@ -298,16 +277,6 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
               <EditSearchEntryList :item="item" />
             </v-menu>
           </v-btn>
-
-          <v-btn
-            :disabled="item.metadata.isDead"
-            :loading="isFaviconFlushing"
-            :title="t('SetSite.index.table.flushFavicon')"
-            color="indigo"
-            icon="mdi-face-recognition"
-            size="small"
-            @click="() => flushSiteFavicon(item.id)"
-          ></v-btn>
         </v-btn-group>
       </template>
     </v-data-table>

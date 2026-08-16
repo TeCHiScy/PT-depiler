@@ -382,6 +382,14 @@ export interface ISiteMetadata {
   userInputSettingMeta?: ISiteUserInputMeta[];
 }
 
+export interface IFaviconCacheEntry {
+  value: string;
+  fetchedAt: number;
+  sourceUrl?: string;
+  etag?: string;
+  lastModified?: string;
+}
+
 /**
  * 用于站点的用户配置，这部分配置由用户提供，外部应用应仅存储以下内容，不应存储其他内容
  *

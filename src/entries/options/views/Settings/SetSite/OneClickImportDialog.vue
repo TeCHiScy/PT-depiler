@@ -218,7 +218,7 @@ async function dialogEnter() {
                     hide-details
                     multiple
                   />
-                  <SiteFavicon :site-id="site.id" class="mr-2" flush-on-click />
+                  <SiteFavicon :site-id="site.id" class="mr-2" />
                 </template>
 
                 <template #title>

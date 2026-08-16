@@ -74,7 +74,7 @@ function save() {
             <v-col v-for="site in addedSites" :key="site.id" cols="12" md="4" sm="6" class="pa-1">
               <v-list-item border class="bg-grey-lighten-4">
                 <template #prepend>
-                  <SiteFavicon :site-id="site.id" class="mr-2" flush-on-click />
+                  <SiteFavicon :site-id="site.id" class="mr-2" />
                 </template>
 
                 <template #title>

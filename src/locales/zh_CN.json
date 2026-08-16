@@ -823,12 +823,10 @@
       "uploadSpeedLimitHint": "设置向下载器推送种子时的上传速度限制 (MiB/s)，0或不填时不限速"
     },
     "index": {
-      "flushFaviconFinish": "所选站点的图标已成功刷新！",
       "oneClickImport": "一键导入站点",
       "reBuildMap": "重建站点映射",
       "settingNote": ["只有配置过的站点才会显示插件图标及相应的功能；", "已离线的站点不再参与搜索和信息获取；"],
       "table": {
-        "flushFavicon": "刷新站点图标",
         "searchEntries": "搜索入口"
       }
     },

@@ -1,24 +1,16 @@
 /**
- * 获取站点图标的方法
+ * 获取站点图标的方法。
  *
- * 我们不用很在意 Favicon 的本地缓存情况，因为这部分可以随时重新获取，所以直接用 localforage 就行了
- * 程序按照如下顺序获取Favicon：
- *   1. '../icons' 目录中是否存在对应 png 或 ico 文件 `${config.id}.${"png" | "ico"}`
-       注意：1. 主要方便 以解压缩形式安装的用户覆写 以及部分教育网站点可能需要特殊方法访问的情况
-            2. 此时，ISiteMetadata 中定义的 favicon 字段配置项不起作用，强制刷新缓存不起作用（本地硬配置优先）
- *   2. localforage 中已有的 base64 缓存（根据站点的 host 值）
- *   3. ISiteMetadata 中定义的 favicon 字段
- *   4. 请求网站首页，并从返回的html中解析所需要的 favicon 字段
- *   5. 使用 NO_IMAGE 替代
- *
- * special thanks to: https://github.com/spro/get-website-favicon/tree/master/lib/origin
+ * 远程 favicon 由 offscreen 层负责缓存和重新验证；本文件只负责远程发现、下载和本地资源 fallback。
  */
 
 import axios from "axios";
-import type { ISiteMetadata } from "../types";
+import type { IFaviconCacheEntry, ISiteMetadata } from "../types";
+
+export const FAVICON_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 // from: https://stackoverflow.com/a/9967193/8824471
-// from: http://proger.i-forge.net/%D0%9A%D0%BE%D0%BC%D0%BF%D1%8C%D1%8E%D1%82%D0%B5%D1%80/[20121112]%20The%20smallest%20transparent%20pixel.html
+// from: http://proger.i-forge.net/%D0%9A%D0%B0%D0%BA_%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B8%D1%82%D1%8C_favicon_%D1%81%D0%B0%D0%B9%D1%82%D0%B0/[20121112]%20The_smallest_transparent_pixel.html
 export const NO_IMAGE = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=";
 
 const FAVICON_FROM_LINK = [
@@ -28,19 +20,33 @@ const FAVICON_FROM_LINK = [
   "link[rel='apple-touch-icon-precomposed' i][href]",
   "link[rel='apple-touch-startup-image' i][href]",
   "link[rel='fluid-icon' i][href]",
-  // "meta[name='msapplication-TileImage' i][content]"
 ];
+
+interface IFaviconBlobResult {
+  blob?: Blob;
+  sourceUrl: string;
+  etag?: string;
+  lastModified?: string;
+  notModified?: boolean;
+}
 
 interface IParsedFavicon {
   href: string;
   sizes: string | `${string}x${string}`;
   source: "manifest" | "link" | "favicon";
-  blob?: Blob;
+  fetchResult?: IFaviconBlobResult;
+}
+
+export interface IFaviconFetchResult {
+  value: string;
+  sourceUrl?: string;
+  etag?: string;
+  lastModified?: string;
 }
 
 const remoteBetterFaviconOrder = [
   {
-    key: "source", // favicon.ico - 2
+    key: "source",
     rank: (item: IParsedFavicon) => {
       const rule = ["favicon", "link", "manifest"].reverse();
       let rank = 0;
@@ -51,7 +57,6 @@ const remoteBetterFaviconOrder = [
     },
   },
   {
-    // favicon.ico - 3
     key: "ext",
     rank: (item: IParsedFavicon) => {
       const rule = [/\.ico$/im, /\.png$/im, /\.jpg$/im, /\.svg$/im].reverse();
@@ -65,33 +70,24 @@ const remoteBetterFaviconOrder = [
   {
     key: "sizes",
     rank: (item: IParsedFavicon) => {
-      let rank = 0;
-      if (!item.sizes) return rank;
+      if (!item.sizes) return 0;
       const wh = item.sizes.split("x");
       const size = parseInt(wh[0]);
-      if (wh[0] != wh[1]) return rank;
-      if (size > 24 && size < 40) {
-        rank = 4;
-      } else if (size > 36 && size < 90) {
-        rank = 3;
-      } else if (size > 88 && size < 260) {
-        rank = 2;
-      } else if (size > 15 && size < 26) {
-        rank = 1;
-      } else {
-        rank = 0;
-      }
-      return rank;
+      if (wh[0] != wh[1]) return 0;
+      if (size > 24 && size < 40) return 4;
+      if (size > 36 && size < 90) return 3;
+      if (size > 88 && size < 260) return 2;
+      if (size > 15 && size < 26) return 1;
+      return 0;
     },
   },
 ].reverse();
 
-// FIXME 转成公共函数 BlobToBase64
-function transformBlob(blob: Blob): Promise<any> {
+function transformBlob(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.addEventListener("loadend", () => {
-      if (reader.result) {
+      if (typeof reader.result === "string") {
         resolve(reader.result);
       } else {
         reject(new Error("Error when parse favicon Blob"));
@@ -102,14 +98,38 @@ function transformBlob(blob: Blob): Promise<any> {
   });
 }
 
-async function getFaviconFromUrl(url: string): Promise<Blob> {
+function getHeader(headers: Record<string, unknown>, name: string): string | undefined {
+  const value = headers[name];
+  return typeof value === "string" ? value : undefined;
+}
+
+async function fetchFaviconBlob(url: string, cache?: IFaviconCacheEntry): Promise<IFaviconBlobResult> {
+  const headers: Record<string, string> = {};
+  if (cache?.sourceUrl === url) {
+    if (cache.etag) headers["If-None-Match"] = cache.etag;
+    if (cache.lastModified) headers["If-Modified-Since"] = cache.lastModified;
+  }
+
+  const response = await axios.get<Blob>(url, {
+    responseType: "blob",
+    headers,
+    validateStatus: (status) => status === 200 || status === 304,
+  });
+
+  return {
+    blob: response.status === 304 ? undefined : response.data,
+    sourceUrl: url,
+    etag: getHeader(response.headers as Record<string, unknown>, "etag"),
+    lastModified: getHeader(response.headers as Record<string, unknown>, "last-modified"),
+    notModified: response.status === 304,
+  };
+}
+
+async function getFaviconFromUrl(url: string): Promise<IFaviconBlobResult> {
   const baseUrl = new URL(url);
-
   const { data: doc } = await axios.get<Document>(url, { responseType: "document" });
-
   const favicons: IParsedFavicon[] = [];
 
-  // 1. Parse from head
   FAVICON_FROM_LINK.forEach((selector) => {
     const element = doc.querySelector(selector) as HTMLLinkElement;
     if (element) {
@@ -121,96 +141,63 @@ async function getFaviconFromUrl(url: string): Promise<Blob> {
     }
   });
 
-  // 2. Parse from manifest
   const manifestElement = doc.querySelector('head link[rel="manifest" i]') as HTMLLinkElement;
   if (manifestElement) {
     const { data: manifest } = await axios.get<{
-      icons: Record<"sizes" | "src" | "type", string>[];
+      icons?: Record<"sizes" | "src" | "type", string>[];
     }>(manifestElement.href, { responseType: "json" });
 
-    manifest.icons.forEach(({ sizes, src }) => {
+    for (const { sizes, src } of manifest.icons ?? []) {
       favicons.push({
-        href: src,
+        href: new URL(src, manifestElement.href).href,
         sizes,
         source: "manifest",
       });
-    });
+    }
   }
 
-  // 3. Default /favicon.ico
   try {
-    const faviconIco = await axios.get<Blob>("/favicon.ico", {
-      baseURL: baseUrl.origin,
-      responseType: "blob",
-    });
-    if (faviconIco && faviconIco.data?.type === "image/x-icon") {
-      favicons.push({
-        href: "/favicon.ico",
-        sizes: "",
-        source: "favicon",
-        blob: faviconIco.data,
-      } as IParsedFavicon);
+    const faviconUrl = new URL("/favicon.ico", baseUrl).href;
+    const faviconIco = await fetchFaviconBlob(faviconUrl);
+    if (faviconIco.blob && ["image/x-icon", "image/vnd.microsoft.icon"].includes(faviconIco.blob.type)) {
+      favicons.push({ href: faviconUrl, sizes: "", source: "favicon", fetchResult: faviconIco });
     }
-  } catch (e) {}
+  } catch {}
 
-  // 如果前面获取到足够的 favicons，我们需要比较下哪个更合适，并排序
-  if (favicons.length > 0) {
-    const rankedFavicons: Array<IParsedFavicon & { rank: number }> = favicons
-      .map((icon) => {
-        // 计算每一个favicon的评分
-        let rank = 0;
-        for (const x in remoteBetterFaviconOrder) {
-          const order = remoteBetterFaviconOrder[x];
-          if (order.rank) {
-            rank += order.rank(icon) * Math.pow(10, parseInt(x));
-          }
-        }
-
-        return {
-          ...icon,
-          rank,
-        };
-      })
-      .sort((a, b) => (a.rank < b.rank ? 1 : -1));
-
-    // 选择排序后第一个图标作为我们需要的图标
-    for (let i = 0; i < rankedFavicons.length; i++) {
-      const usedFavicons = rankedFavicons[i];
-      if (usedFavicons.blob) {
-        return usedFavicons.blob;
-      } else {
-        try {
-          let faviconUrl = usedFavicons.href;
-          if (faviconUrl.startsWith("//")) {
-            faviconUrl = `${baseUrl.protocol}${faviconUrl}`;
-          } else if (faviconUrl.startsWith("/")) {
-            faviconUrl = `${baseUrl.origin}${faviconUrl}`;
-          }
-
-          const { data } = await axios.get(faviconUrl, { responseType: "blob" });
-          return data;
-        } catch {}
-      }
-    }
+  if (favicons.length === 0) {
+    throw new Error("Can't find any favicons from this site");
   }
 
-  throw new Error("Can't find any favicons from this site");
+  const rankedFavicons = favicons
+    .map((icon) => {
+      let rank = 0;
+      for (const x in remoteBetterFaviconOrder) {
+        const order = remoteBetterFaviconOrder[x];
+        rank += order.rank(icon) * Math.pow(10, parseInt(x));
+      }
+      return { ...icon, rank };
+    })
+    .sort((a, b) => (a.rank < b.rank ? 1 : -1));
+
+  for (const usedFavicon of rankedFavicons) {
+    try {
+      if (usedFavicon.fetchResult) return usedFavicon.fetchResult;
+      return await fetchFaviconBlob(new URL(usedFavicon.href, baseUrl).href);
+    } catch {}
+  }
+
+  throw new Error("Can't fetch any favicons from this site");
 }
 
 export type getFaviconMetadata = Required<Pick<ISiteMetadata, "id" | "urls">> & Pick<ISiteMetadata, "favicon">;
 
-export async function getFavicon(site: getFaviconMetadata): Promise<string> {
-  const { id: siteId, urls: siteUrls, favicon: siteFavicon } = site;
-
-  // 1. 检查本地icons目录是否存在对应文件
+/** 返回插件内置的站点图标，只作为远程 favicon 失败时的 fallback。 */
+export function getLocalFavicon(site: Pick<ISiteMetadata, "id" | "favicon">): string | undefined {
+  const { id: siteId, favicon: siteFavicon } = site;
   let checkLocalIconPaths = [`${siteId}.png`, `${siteId}.ico`, `${siteId}.svg`];
 
-  if (siteFavicon) {
-    if (siteFavicon.startsWith("data:image/")) {
-      return siteFavicon; // base64直接返回就行了
-    } else if (siteFavicon.startsWith("./")) {
-      checkLocalIconPaths = [siteFavicon.replace(/^\.\//, ""), ...checkLocalIconPaths]; // 优先使用 已定义的 favicon
-    }
+  if (siteFavicon?.startsWith("./")) {
+    checkLocalIconPaths = [siteFavicon.replace(/^\.\//, ""), ...checkLocalIconPaths];
   }
 
   for (const checkLocalIconPath of checkLocalIconPaths) {
@@ -219,35 +206,91 @@ export async function getFavicon(site: getFaviconMetadata): Promise<string> {
     }
   }
 
-  // 2. 检查网站是否有对应icon
-  let faviconMeta;
+  return undefined;
+}
 
-  // 2.1 ISiteMetadata 中定义的 favicon 字段为一个链接
-  if (siteFavicon && siteFavicon.startsWith("http")) {
+/** 只从站点获取 favicon，不使用插件本地 icon fallback。 */
+export async function getRemoteFavicon(
+  site: getFaviconMetadata,
+  cache?: IFaviconCacheEntry,
+): Promise<IFaviconFetchResult | null> {
+  const { urls: siteUrls, favicon: siteFavicon } = site;
+
+  if (cache?.sourceUrl) {
     try {
-      const configReq = await axios.get(siteFavicon, { responseType: "blob" });
-      faviconMeta = configReq.data;
+      const cachedResult = await fetchFaviconBlob(cache.sourceUrl, cache);
+      if (cachedResult.notModified && cache.value !== NO_IMAGE) {
+        return {
+          value: cache.value,
+          sourceUrl: cache.sourceUrl,
+          etag: cachedResult.etag ?? cache.etag,
+          lastModified: cachedResult.lastModified ?? cache.lastModified,
+        };
+      }
+      if (cachedResult.blob) {
+        return {
+          value: await transformBlob(cachedResult.blob),
+          sourceUrl: cachedResult.sourceUrl,
+          etag: cachedResult.etag,
+          lastModified: cachedResult.lastModified,
+        };
+      }
     } catch {}
   }
 
-  // 2.2 请求网站首页，并从返回的html中解析所需要的 favicon 字段
-  if (!faviconMeta) {
-    for (const url of siteUrls) {
-      try {
-        faviconMeta = await getFaviconFromUrl(url);
-        break;
-      } catch {}
-    }
+  if (siteFavicon?.startsWith("data:image/")) {
+    return { value: siteFavicon };
   }
 
-  // 将请求结果转为 base64
-  let faviconBase64;
-  if (typeof faviconMeta !== "undefined") {
-    faviconBase64 = await transformBlob(faviconMeta); // 将 faviconMeta 转成 base64，并缓存
+  if (siteFavicon?.startsWith("http")) {
+    try {
+      const remoteResult = await fetchFaviconBlob(siteFavicon, cache);
+      if (remoteResult.notModified && cache?.value !== NO_IMAGE) {
+        return {
+          value: cache!.value,
+          sourceUrl: remoteResult.sourceUrl,
+          etag: remoteResult.etag ?? cache?.etag,
+          lastModified: remoteResult.lastModified ?? cache?.lastModified,
+        };
+      }
+      if (remoteResult.blob) {
+        return {
+          value: await transformBlob(remoteResult.blob),
+          sourceUrl: remoteResult.sourceUrl,
+          etag: remoteResult.etag,
+          lastModified: remoteResult.lastModified,
+        };
+      }
+    } catch {}
   }
 
-  // 3. fallback 使用 NO_IMAGE 替代
-  faviconBase64 ??= NO_IMAGE;
+  for (const url of siteUrls) {
+    try {
+      const remoteResult = await getFaviconFromUrl(url);
+      if (remoteResult.notModified && cache?.value !== NO_IMAGE) {
+        return {
+          value: cache!.value,
+          sourceUrl: remoteResult.sourceUrl,
+          etag: remoteResult.etag ?? cache?.etag,
+          lastModified: remoteResult.lastModified ?? cache?.lastModified,
+        };
+      }
+      if (remoteResult.blob) {
+        return {
+          value: await transformBlob(remoteResult.blob),
+          sourceUrl: remoteResult.sourceUrl,
+          etag: remoteResult.etag,
+          lastModified: remoteResult.lastModified,
+        };
+      }
+    } catch {}
+  }
 
-  return faviconBase64;
+  return null;
+}
+
+/** 兼容其他调用方：远程 favicon 优先，本地 icon 和 NO_IMAGE 作为 fallback。 */
+export async function getFavicon(site: getFaviconMetadata): Promise<string> {
+  const remoteFavicon = await getRemoteFavicon(site);
+  return remoteFavicon?.value ?? getLocalFavicon(site) ?? NO_IMAGE;
 }

@@ -6,7 +6,7 @@
 
 import type { DBSchema } from "idb";
 import type { ISocialInformation } from "@ptd/social";
-import type { TSiteID as TSiteKey } from "@ptd/site";
+import type { IFaviconCacheEntry, TSiteID as TSiteKey } from "@ptd/site";
 
 import type { ITorrentDownloadMetadata, TTorrentDownloadKey } from "../common/download.ts";
 
@@ -27,6 +27,6 @@ export interface IPtdDBSchemaV2 extends IPtdDBSchemaV1 {
 export interface IPtdDBSchema extends IPtdDBSchemaV2 {
   favicon: {
     key: TSiteKey;
-    value: string;
+    value: string | IFaviconCacheEntry;
   };
 }

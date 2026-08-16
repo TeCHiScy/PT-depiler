@@ -823,7 +823,6 @@
       "uploadSpeedLimitHint": "Set upload speed limit (MiB/s) when pushing torrents to downloader, 0 or empty means unlimited"
     },
     "index": {
-      "flushFaviconFinish": "The selected site favicon has been refreshed successfully!",
       "oneClickImport": "One-Click Import Sites",
       "reBuildMap": "Rebuild Site Cache",
       "settingNote": [
@@ -831,7 +830,6 @@
         "the offline site will no longer participate in the search and information acquisition;"
       ],
       "table": {
-        "flushFavicon": "Refresh Site Favicon",
         "searchEntries": "Search Entries"
       }
     },
