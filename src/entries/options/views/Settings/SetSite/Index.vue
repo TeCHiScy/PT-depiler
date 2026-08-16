@@ -11,7 +11,6 @@ import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 import EditDialog from "./EditDialog.vue";
 import EditSearchEntryList from "./EditSearchEntryList.vue";
 import OneClickImportDialog from "./OneClickImportDialog.vue";
-import RebuildMapDialog from "./RebuildMapDialog.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import NavButton from "@/options/components/NavButton.vue";
 
@@ -25,7 +24,6 @@ const metadataStore = useMetadataStore();
 
 const showEditDialog = ref<boolean>(false);
 const showOneClickImportDialog = ref<boolean>(false);
-const showRebuildMapDialog = ref<boolean>(false);
 
 const tableHeader = computed(() => {
   const baseHeaders = [
@@ -97,15 +95,6 @@ function editSite(siteId: TSiteID) {
           icon="mdi-crosshairs-gps"
           :text="t('SetSite.index.oneClickImport')"
           @click="() => (showOneClickImportDialog = true)"
-        />
-
-        <v-divider class="mx-2" inset vertical />
-
-        <NavButton
-          :text="t('SetSite.index.reBuildMap')"
-          color="indigo"
-          icon="mdi-wrench"
-          @click="showRebuildMapDialog = true"
         />
 
         <v-spacer />
@@ -284,7 +273,6 @@ function editSite(siteId: TSiteID) {
 
   <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
   <OneClickImportDialog v-model="showOneClickImportDialog" />
-  <RebuildMapDialog v-model="showRebuildMapDialog" />
 </template>
 
 <style scoped lang="scss"></style>

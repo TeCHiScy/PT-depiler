@@ -42,6 +42,7 @@ import {
   TTorrentDownloadStatus,
   IDownloadTorrentOption,
   IDownloadTorrentResult,
+  IMetadataPiniaStorageSchema,
   AugmentedRequired,
   IKeepUploadTask,
   TKeepUploadTaskKey,
@@ -63,6 +64,10 @@ interface ProtocolMap extends TMessageMap {
   // 1.2 chrome.storage
   getExtStorage<T extends TExtensionStorageKey>(key: T): IExtensionStorageSchema[T];
   setExtStorage<T extends TExtensionStorageKey>(data: { key: T; value: IExtensionStorageSchema[T] }): void;
+  ensureSiteMapCache(data: IMetadataPiniaStorageSchema): {
+    metadata: IMetadataPiniaStorageSchema;
+    changed: boolean;
+  };
 
   // 1.3 chrome.declarativeNetRequest
   updateDNRSessionRules(data: { rule: chrome.declarativeNetRequest.Rule; extOnly?: boolean }): void;

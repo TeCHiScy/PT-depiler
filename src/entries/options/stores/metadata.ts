@@ -2,13 +2,11 @@ import { nanoid } from "nanoid";
 import { defineStore } from "pinia";
 import { isEmpty, set } from "es-toolkit/compat";
 import {
-  getHostFromUrl,
   getDefinedSiteMetadata,
   type ISearchCategories,
   type ISearchEntryRequestConfig,
   type ISiteMetadata,
   type ISiteUserConfig,
-  type TSiteHost,
   type TSiteID,
 } from "@ptd/site";
 
@@ -27,6 +25,7 @@ import {
 import { sendMessage } from "@/messages.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
+import { buildSiteMaps, getSiteMapVersion } from "@/shared/utils/siteMap.ts";
 
 type TSimplePatchFieldKey = keyof Pick<
   IMetadataPiniaStorageSchema,
@@ -54,6 +53,7 @@ export const useMetadataStore = defineStore("metadata", {
 
     siteHostMap: {},
     siteNameMap: {},
+    siteMapVersion: "",
   }),
 
   getters: {
@@ -357,73 +357,51 @@ export const useMetadataStore = defineStore("metadata", {
       await this.$save();
     },
 
-    async addSite(siteId: TSiteID, siteConfig: ISiteUserConfig, options?: { reBuildMap?: boolean }) {
-      const { reBuildMap = true } = options ?? {};
+    async addSite(siteId: TSiteID, siteConfig: ISiteUserConfig, options?: { rebuildMaps?: boolean }) {
+      const { rebuildMaps = true } = options ?? {};
 
       delete siteConfig.valid;
       this.sites[siteId] = siteConfig;
 
-      if (reBuildMap) {
+      if (rebuildMaps) {
         await this.buildSiteMapCache(false);
       }
 
       await this.$save();
     },
 
-    async removeSite(siteId: TSiteID, options?: { reBuildMap?: boolean }) {
-      const { reBuildMap = true } = options ?? {};
+    async removeSite(siteId: TSiteID, options?: { rebuildMaps?: boolean }) {
+      const { rebuildMaps = true } = options ?? {};
 
       delete this.sites[siteId];
 
-      if (reBuildMap) {
+      if (rebuildMaps) {
         await this.buildSiteMapCache(false);
       }
 
       await this.$save();
     },
 
-    /**
-     * 在添加、编辑站点时调用，重新生成 host 对站点的映射，
-     * 便于 content-script 等其他地方通过 (await extStorage.getItem('metadata')).siteHostMap[host] 获取站点 ID
-     */
-    async buildSiteHostMap() {
-      const siteHostMap: Record<TSiteHost, TSiteID> = {};
-      for (const siteId in this.sites) {
-        const site = this.sites[siteId];
-        if (site.url) {
-          siteHostMap[getHostFromUrl(site.url)] = siteId;
-        }
-        const urls = await this.getSiteMergedMetadata(siteId, "urls", []);
-        if (urls.length > 0) {
-          for (const url of urls) {
-            siteHostMap[getHostFromUrl(url)] = siteId;
-          }
-        }
-        const legacyUrls = (await this.getSiteMergedMetadata(siteId, "legacyUrls", []))!;
-        if (legacyUrls.length > 0) {
-          for (const url of legacyUrls) {
-            siteHostMap[getHostFromUrl(url)] = siteId;
-          }
-        }
-      }
-      this.siteHostMap = siteHostMap;
-    },
-
-    async buildSiteNameMap() {
-      const siteNameMap: Record<TSiteID, string> = {};
-      for (const siteId in this.sites) {
-        siteNameMap[siteId] = await this.getSiteName(siteId);
-      }
-      this.siteNameMap = siteNameMap;
-    },
-
     async buildSiteMapCache(save: boolean = false) {
-      await this.buildSiteNameMap();
-      await this.buildSiteHostMap();
+      const { siteHostMap, siteNameMap } = await buildSiteMaps(this.sites);
+      this.siteHostMap = siteHostMap;
+      this.siteNameMap = siteNameMap;
+      this.siteMapVersion = getSiteMapVersion(this.sites);
 
       if (save) {
         await this.$save();
       }
+    },
+
+    async ensureSiteMapCache(save: boolean = true) {
+      const siteMapVersion = getSiteMapVersion(this.sites);
+      const hasSiteNames = Object.keys(this.sites).every((siteId) => Object.hasOwn(this.siteNameMap, siteId));
+      if (this.siteMapVersion === siteMapVersion && hasSiteNames) {
+        return false;
+      }
+
+      await this.buildSiteMapCache(save);
+      return true;
     },
 
     async addSearchSolution(solution: ISearchSolutionMetadata) {

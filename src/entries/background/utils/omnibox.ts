@@ -1,8 +1,7 @@
 import { stringify } from "urlencode";
 
-import { extStorage } from "@/storage.ts";
 import type { IMetadataPiniaStorageSchema } from "@/shared/types.ts";
-import { openOptionsPage } from "@/background/utils/base.ts";
+import { getMetadataStore, openOptionsPage } from "@/background/utils/base.ts";
 
 const splitString = " → ";
 
@@ -17,7 +16,7 @@ const allSolution = {
 };
 
 async function getSearchSolution(getAll = false) {
-  const { defaultSolutionId = "default", solutions = {} } = ((await extStorage.getItem("metadata")) ??
+  const { defaultSolutionId = "default", solutions = {} } = ((await getMetadataStore()) ??
     {}) as IMetadataPiniaStorageSchema;
 
   let solutionsList: ISearchSolution[] = Object.values(solutions)

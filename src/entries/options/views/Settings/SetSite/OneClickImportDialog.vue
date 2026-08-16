@@ -84,7 +84,7 @@ async function doAutoImport() {
   importStatus.value.isWorking = true;
   importStatus.value.failed = [];
 
-  // 遍历所有需要添加的站点，在遍历过程中我们不更新 siteHostMap 和 siteNameMap
+  // 遍历所有需要添加的站点，在遍历过程中不重复构建派生站点映射
   for (const site of importStatus.value.toWork) {
     if (importStatus.value.success.includes(site)) {
       continue; // 如果已经添加成功，则跳过
@@ -102,14 +102,14 @@ async function doAutoImport() {
       // 对于 public 站点，不需要额外测试是否能够搜索
       if (siteMetadata.type === "public") {
         // 直接将该站点设置存入 metadataStore
-        await metadataStore.addSite(site, siteUserConfig, { reBuildMap: false }); // 抑制 site{Name, Host}Map 更新
+        await metadataStore.addSite(site, siteUserConfig, { rebuildMaps: false });
         isThisSiteSuccess = true;
       } else {
         // 遍历所有 private site 预设的 urls ，找到用户实际使用的 url
         for (const siteUrl of siteMetadata.urls) {
           siteUserConfig.url = siteUrl;
           // 临时将该设置存入 metadataStore
-          await metadataStore.addSite(site, siteUserConfig, { reBuildMap: false });
+          await metadataStore.addSite(site, siteUserConfig, { rebuildMaps: false });
           const { status: testStatus } = await sendMessage("getSiteSearchResult", { siteId: site });
           if (testStatus === EResultParseStatus.success) {
             isThisSiteSuccess = true; // 如果搜索成功，说明该站点可以自动添加
@@ -123,7 +123,7 @@ async function doAutoImport() {
       } else {
         importStatus.value.failed.push(site);
         // 如果搜索失败，说明该站点不能自动添加，移除在 metadataStore 中临时添加的配置项
-        await metadataStore.removeSite(site, { reBuildMap: false });
+        await metadataStore.removeSite(site, { rebuildMaps: false });
       }
     } catch (e) {
       importStatus.value.failed.push(site);

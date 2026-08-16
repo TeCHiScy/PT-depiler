@@ -5,6 +5,7 @@ import { useLocale as useVuetifyLocal } from "vuetify";
 import { useDevicePixelRatio } from "@vueuse/core";
 
 import { useConfigStore } from "@/options/stores/config.ts";
+import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { vuetifyLangMap } from "@/options/plugins/vuetify.ts";
 
@@ -15,7 +16,14 @@ const { current: currentVuetifyLocal } = useVuetifyLocal();
 const { locale: currentVueI18nLocal, t } = useI18n({ useScope: "global" });
 
 const configStore = useConfigStore();
+const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
+
+metadataStore
+  .$onReady(() => metadataStore.ensureSiteMapCache())
+  .catch((error) => {
+    console.warn("[PTD] Failed to ensure site map cache on options startup", error);
+  });
 
 watch(
   () => configStore.lang,

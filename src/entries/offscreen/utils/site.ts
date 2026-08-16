@@ -16,6 +16,7 @@ import {
 
 import { onMessage, sendMessage } from "@/messages.ts";
 import type { IMetadataPiniaStorageSchema } from "@/shared/types.ts";
+import { ensureSiteMapMetadata } from "@/shared/utils/siteMap.ts";
 
 import { logger } from "./logger.ts";
 import { ptdIndexDb } from "../adapter/indexdb.ts";
@@ -55,6 +56,8 @@ export async function getSiteUserConfig(siteId: TSiteID, flush = false) {
 }
 
 onMessage("getSiteUserConfig", async ({ data: { siteId, flush } }) => await getSiteUserConfig(siteId, flush));
+
+onMessage("ensureSiteMapCache", async ({ data }) => await ensureSiteMapMetadata(data));
 
 onMessage("getSiteList", async () => {
   const metadata = (await sendMessage("getExtStorage", "metadata")) as IMetadataPiniaStorageSchema;

@@ -785,12 +785,6 @@
       "requestTimeoutHint": "影响该站点请求（种子搜索、用户信息获取）的超时等待时间",
       "siteSettings": "站点设置"
     },
-    "ReBuildMapDialog": {
-      "doRebuildBtn": "重建",
-      "rebuildSiteHostMap": "重建站点域名关系缓存",
-      "rebuildSiteNameMap": "重建站点名称关系缓存",
-      "title": "重建站点映射关系缓存"
-    },
     "SiteCategoryPanel": {
       "siteDefault": "站点默认"
     },
@@ -829,7 +823,6 @@
     },
     "index": {
       "oneClickImport": "一键导入站点",
-      "reBuildMap": "重建站点映射",
       "settingNote": ["只有配置过的站点才会显示插件图标及相应的功能；", "已离线的站点不再参与搜索和信息获取；"],
       "table": {
         "searchEntries": "搜索入口"

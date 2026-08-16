@@ -7,6 +7,7 @@ import { onMessage, sendMessage } from "@/messages.ts";
 import { IDownloadTorrentOption, IMetadataPiniaStorageSchema } from "@/shared/types.ts";
 
 import { setupOffscreenDocument } from "./offscreen.ts";
+import { getMetadataStore, setMetadataStore } from "./base.ts";
 import { sleep } from "~/helper.ts";
 
 export enum EJobType {
@@ -38,7 +39,7 @@ function autoFlushUserInfo(retryIndex: number = 0) {
 
     const curDate = new Date();
     const curDateFormat = format(curDate, "yyyy-MM-dd");
-    let metadataStore = (await extStorage.getItem("metadata"))!;
+    let metadataStore = (await getMetadataStore())!;
 
     // 如果不是重试，则要检查是否满足刷新条件
     if (retryIndex === 0) {
@@ -51,7 +52,7 @@ function autoFlushUserInfo(retryIndex: number = 0) {
         return;
       }
 
-      metadataStore = (await extStorage.getItem("metadata"))!;
+      metadataStore = (await getMetadataStore())!;
       const lastFlushDateFormat = format(metadataStore.lastUserInfoAutoFlushAt, "yyyy-MM-dd");
 
       // 如果不是同一天，则不检查距离上次刷新时间是否超过了设定的间隔，这样能保证至少每天刷新一次（即启动浏览器后第一次检查）
@@ -78,7 +79,7 @@ function autoFlushUserInfo(retryIndex: number = 0) {
      * 由于是后台任务，所以我们不使用 promise 来并行处理，以确保 flushQueue 中永远只有一个任务在运行，
      * 防止用户设置的并发数过大而被浏览器block
      */
-    metadataStore = (await extStorage.getItem("metadata"))!; // 遍历 metadataStore 中添加的站点
+    metadataStore = (await getMetadataStore())!; // 遍历 metadataStore 中添加的站点
     for (const [siteId, siteConfig] of Object.entries(metadataStore.sites)) {
       if (!siteConfig.isOffline && siteConfig.allowQueryUserInfo) {
         try {
@@ -103,9 +104,9 @@ function autoFlushUserInfo(retryIndex: number = 0) {
     }).catch();
 
     // 将刷新时间存入 metadataStore
-    metadataStore = (await extStorage.getItem("metadata"))!;
+    metadataStore = (await getMetadataStore())!;
     metadataStore.lastUserInfoAutoFlushAt = new Date().getTime(); // 刷新时间应该是实际完成时间
-    await extStorage.setItem("metadata", metadataStore);
+    await setMetadataStore(metadataStore);
 
     // 如果本次有失败的刷新操作，则设置重试
     if (failFlushSites.length > 0 && retryIndex < retryMax) {
@@ -138,7 +139,7 @@ function autoBackup() {
   return async () => {
     await setupOffscreenDocument();
 
-    const metadataStore = (await extStorage.getItem("metadata")) as IMetadataPiniaStorageSchema | undefined;
+    const metadataStore = (await getMetadataStore()) as IMetadataPiniaStorageSchema | undefined;
     if (!metadataStore?.backupServers) {
       return;
     }

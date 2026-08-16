@@ -150,4 +150,7 @@ export interface IMetadataPiniaStorageSchema {
 
   // 站点 ID 到站点名称的映射表
   siteNameMap: Record<TSiteKey, string>;
+
+  // 派生站点映射的来源版本，用于自动检测并修复陈旧映射
+  siteMapVersion?: string;
 }

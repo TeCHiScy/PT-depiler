@@ -785,12 +785,6 @@
       "requestTimeoutHint": "Affects the timeout for site requests (torrent search, user info retrieval)",
       "siteSettings": "Site Settings"
     },
-    "ReBuildMapDialog": {
-      "doRebuildBtn": "Rebuild",
-      "rebuildSiteHostMap": "Rebuild site host mapping cache",
-      "rebuildSiteNameMap": "Rebuild site name mapping cache",
-      "title": "Rebuild Site Mapping Cache"
-    },
     "SiteCategoryPanel": {
       "siteDefault": "Site Default"
     },
@@ -829,7 +823,6 @@
     },
     "index": {
       "oneClickImport": "One-Click Import Sites",
-      "reBuildMap": "Rebuild Site Cache",
       "settingNote": [
         "Only the configured site will display the plugin icon and the corresponding function;",
         "the offline site will no longer participate in the search and information acquisition;"

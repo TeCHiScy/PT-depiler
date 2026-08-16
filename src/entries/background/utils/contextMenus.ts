@@ -9,7 +9,7 @@ import { extStorage } from "@/storage.ts";
 import { onMessage, sendMessage } from "@/messages.ts";
 import { type IDownloaderMetadata } from "@/shared/types/storages/metadata.ts";
 
-import { openOptionsPage } from "./base.ts";
+import { getMetadataStore, openOptionsPage } from "./base.ts";
 
 const contextMenusId = "PT-Depiler-Context-Menus";
 
@@ -77,7 +77,7 @@ async function downloadLinkPush(
   if (link.match(/https?:\/\/([^/]+)/)) {
     const host = getHostFromUrl(link);
     try {
-      const metadataStore = await extStorage.getItem("metadata");
+      const metadataStore = await getMetadataStore();
       if (metadataStore?.siteHostMap?.[host]) {
         torrent.site = metadataStore.siteHostMap[host];
       }
@@ -125,7 +125,7 @@ interface ICreateSearchMenuOption {
 }
 
 async function createSearchMenu(baseMenuId: string, options: ICreateSearchMenuOption = {}) {
-  const metadataStore = (await extStorage.getItem("metadata"))! ?? {};
+  const metadataStore = (await getMetadataStore())! ?? {};
 
   const {
     thisTabSiteId = null,
@@ -239,7 +239,7 @@ async function createSearchMenu(baseMenuId: string, options: ICreateSearchMenuOp
 async function initContextMenus(tab: chrome.tabs.Tab) {
   // 这里不处理 https://github.com/pt-plugins/PT-depiler/pull/470#discussion_r2295102201 提到的情况，因为会导致后面的type错误
   const configStore = (await extStorage.getItem("config"))! ?? {};
-  const metadataStore = (await extStorage.getItem("metadata"))! ?? {};
+  const metadataStore = (await getMetadataStore())! ?? {};
 
   const tabHost = getHostFromUrl(tab.url || "https://example.com");
   const thisTabSiteId = metadataStore?.siteHostMap?.[tabHost];
