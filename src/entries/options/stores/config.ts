@@ -14,13 +14,7 @@ const deprecatedConfigKeys = [
   "myDataTableControl.joinTimeWeekOnly", // 已废弃，使用 joinTimeFormat 替代
 ];
 
-const unifiedSiteTableColumns = [
-  "availability",
-  "siteUserConfig.groups",
-  "siteUserConfig.isOffline",
-  "siteUserConfig.allowSearch",
-  "siteUserConfig.allowQueryUserInfo",
-];
+const removedSiteTableColumns = ["siteUserConfig.allowSearch", "siteUserConfig.allowQueryUserInfo"];
 
 export const defaultTimelineBackgroundColor = "#455A64";
 
@@ -60,9 +54,9 @@ export const useConfigStore = defineStore("config", {
 
       if (Array.isArray(state.tableBehavior?.MyData?.columns)) {
         const currentColumns = state.tableBehavior.MyData.columns;
-        const missingColumns = unifiedSiteTableColumns.filter((column) => !currentColumns.includes(column));
-        if (missingColumns.length > 0) {
-          state.tableBehavior.MyData.columns = [...currentColumns, ...missingColumns];
+        const filteredColumns = currentColumns.filter((column: string) => !removedSiteTableColumns.includes(column));
+        if (filteredColumns.length !== currentColumns.length) {
+          state.tableBehavior.MyData.columns = filteredColumns;
           needsSave = true;
         }
       }
@@ -117,8 +111,6 @@ export const useConfigStore = defineStore("config", {
           "name",
           "siteUserConfig.groups",
           "siteUserConfig.isOffline",
-          "siteUserConfig.allowSearch",
-          "siteUserConfig.allowQueryUserInfo",
           "levelName",
           "uploaded",
           "ratio",

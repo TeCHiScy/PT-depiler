@@ -780,9 +780,6 @@
     "Editor": {
       "downloadInterval": "下载间隔",
       "downloadIntervalHint": "影响该站点的下载间隔时间（为了安全考虑，插件不会严格遵守该设置，实际间隔总是会略大于等于设置的间隔）",
-      "downloadLinkSuffix": "下载链接后缀",
-      "downloadLinkSuffixExample": "如插件获得的链接为 https://example.com/download.php?id=1，此处设置为 &passkey=xxxx， 则最终下载链接为 https://example.com/download.php?id=1&passkey=xxxx. 通常无须填写，仅在无法获得 passkey 时可手动添加",
-      "downloadLinkSuffixHint": "该字段会被自动添加到该站点的下载链接后",
       "otherSettings": "其他设置",
       "requestTimeout": "请求超时",
       "requestTimeoutHint": "影响该站点请求（种子搜索、用户信息获取）的超时等待时间",
@@ -1129,7 +1126,7 @@
       "DownloadHistory": "下载历史",
       "KeepUploadTask": "辅种任务",
       "MediaServerEntity": "媒体库",
-      "MyClient": "我的下载器",
+      "MyClient": "下载器",
       "MyCollection": "收藏列表",
       "MyData": "站点",
       "SearchEntity": "搜索结果",

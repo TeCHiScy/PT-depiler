@@ -72,12 +72,6 @@ const fullTableHeader = reactive([
   { title: t("common.username"), key: "name", align: "center" },
   { title: t("SetSite.common.groups"), key: "siteUserConfig.groups", align: "left", sortable: false },
   { title: t("SetSite.common.isOffline"), key: "siteUserConfig.isOffline", align: "center" },
-  { title: t("SetSite.common.allowSearch"), key: "siteUserConfig.allowSearch", align: "center" },
-  {
-    title: t("SetSite.common.allowQueryUserInfo"),
-    key: "siteUserConfig.allowQueryUserInfo",
-    align: "center",
-  },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
@@ -628,38 +622,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           color="success"
           hide-details
           @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'isOffline', v as boolean)"
-        />
-      </template>
-
-      <template #item.siteUserConfig.allowSearch="{ item }">
-        <v-switch
-          v-model="item.siteUserConfig.allowSearch"
-          :disabled="
-            !item.isConfigured ||
-            item.metadata.isDead ||
-            item.siteUserConfig.isOffline ||
-            !Object.hasOwn(item.metadata, 'search')
-          "
-          class="table-switch-btn"
-          color="success"
-          hide-details
-          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowSearch', v as boolean)"
-        />
-      </template>
-
-      <template #item.siteUserConfig.allowQueryUserInfo="{ item }">
-        <v-switch
-          v-model="item.siteUserConfig.allowQueryUserInfo"
-          :disabled="
-            !item.isConfigured ||
-            item.metadata.isDead ||
-            item.siteUserConfig.isOffline ||
-            !Object.hasOwn(item.metadata, 'userInfo')
-          "
-          class="table-switch-btn"
-          color="success"
-          hide-details
-          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowQueryUserInfo', v as boolean)"
         />
       </template>
 

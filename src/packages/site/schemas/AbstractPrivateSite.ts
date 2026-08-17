@@ -196,6 +196,11 @@ export default class PrivateSite extends BittorrentSite {
         flushUserInfo.levelId = this.guessUserLevelId(flushUserInfo as IUserInfo);
       }
 
+      if (typeof flushUserInfo.name !== "string" || !flushUserInfo.name.trim()) {
+        throw new Error("用户信息解析缺少用户名");
+      }
+      flushUserInfo.name = flushUserInfo.name.trim();
+
       flushUserInfo.status = EResultParseStatus.success;
     } catch (error) {
       if (import.meta.env.DEV) {

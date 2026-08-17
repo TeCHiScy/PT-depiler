@@ -202,22 +202,28 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
           <v-divider />
         </template>
 
-        <v-label class="my-2">{{ t("SetSite.Editor.otherSettings") }}</v-label>
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-switch
+              v-model="siteUserConfig.allowSearch"
+              :disabled="siteMetaData.isDead || siteUserConfig.isOffline || !Object.hasOwn(siteMetaData, 'search')"
+              :label="t('SetSite.common.allowSearch')"
+              color="success"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-switch
+              v-model="siteUserConfig.allowQueryUserInfo"
+              :disabled="siteMetaData.isDead || siteUserConfig.isOffline || !Object.hasOwn(siteMetaData, 'userInfo')"
+              :label="t('SetSite.common.allowQueryUserInfo')"
+              color="success"
+              hide-details
+            />
+          </v-col>
+        </v-row>
 
-        <v-text-field
-          v-model="siteUserConfig.downloadLinkAppendix"
-          :label="t('SetSite.Editor.downloadLinkSuffix')"
-          :hint="t('SetSite.Editor.downloadLinkSuffixHint')"
-        >
-          <template #append>
-            <v-tooltip max-width="400" location="top">
-              <template #activator="{ props }">
-                <v-icon v-bind="props" class="mr-4" icon="mdi-information" color="info" />
-              </template>
-              {{ t("SetSite.Editor.downloadLinkSuffixExample") }}
-            </v-tooltip>
-          </template>
-        </v-text-field>
+        <v-label class="my-2">{{ t("SetSite.Editor.otherSettings") }}</v-label>
 
         <v-slider
           v-model="siteUserConfig.timeout"
