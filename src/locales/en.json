@@ -109,11 +109,6 @@
       "title": "Warning:"
     }
   },
-  "Logger": {
-    "action": {
-      "details": "Details"
-    }
-  },
   "MediaServerEntity": {
     "ItemInformationDialog": {
       "duration": "Duration: ",
@@ -1128,10 +1123,6 @@
     "working": "Fetching..."
   },
   "route": {
-    "About": {
-      "Logger": "Log",
-      "default": "About"
-    },
     "Devtools": {
       "Debugger": "Debugger",
       "SystemLog": "System Log",

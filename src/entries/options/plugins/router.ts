@@ -143,20 +143,6 @@ export const routes: RouteRecordRaw[] = [
     meta: { isMainMenu: false },
   },
   {
-    path: "/about",
-    name: "About",
-    meta: { isMainMenu: true, keepAlive: true },
-    children: [
-      {
-        path: "/logger",
-        name: "Logger",
-        meta: { icon: "mdi-text-box-search" },
-        component: () => import("../views/About/Logger.vue"),
-      },
-    ],
-  },
-
-  {
     path: "/devtools",
     name: "Devtools",
     meta: { isMainMenu: false },

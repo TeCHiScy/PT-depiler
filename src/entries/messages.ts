@@ -93,8 +93,6 @@ interface ProtocolMap extends TMessageMap {
 
   // 2. 在 offscreen 中注册，涉及页面解析等功能，主要供 options 使用
   logger(data: ILoggerItem): void;
-  getLogger(): ILoggerItem[];
-  clearLogger(): void;
 
   // 2.1 站点基础 ( utils/site )
   getSiteUserConfig(data: { siteId: TSiteID; flush?: boolean }): ISiteUserConfig;

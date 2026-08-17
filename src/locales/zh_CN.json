@@ -109,11 +109,6 @@
       "title": "警告："
     }
   },
-  "Logger": {
-    "action": {
-      "details": "详细信息"
-    }
-  },
   "MediaServerEntity": {
     "ItemInformationDialog": {
       "duration": "时长：",
@@ -1125,10 +1120,6 @@
     "working": "正在获取中..."
   },
   "route": {
-    "About": {
-      "Logger": "日志",
-      "default": "插件相关"
-    },
     "Devtools": {
       "Debugger": "调试信息",
       "SystemLog": "系统日志",
