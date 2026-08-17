@@ -269,8 +269,8 @@
       "showUnreadMessage": "显示未读消息",
       "showUserName": "显示用户名",
       "simplifyBonusNumbers": "简化积分数字显示",
-      "siteCategory": "站点分类",
-      "siteStatus": "站点状态",
+      "siteCategory": "分类",
+      "siteStatus": "状态",
       "updateAtFormatAsAlive": "更新时间显示为相对时间",
       "viewStatistic": "数据图表",
       "viewTimeline": "时间轴"
@@ -285,7 +285,7 @@
       "lastAccessAt": "最近访问时间",
       "lastAccessDurationNote": "已经 {0} 天未访问了",
       "levelName": "等级",
-      "siteStatus": "站点状态",
+      "siteStatus": "状态",
       "trueUserData": "真实数据量",
       "updateAt": "更新时间",
       "userData": "数据量"

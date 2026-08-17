@@ -269,8 +269,8 @@
       "showUnreadMessage": "Show Unread Messages",
       "showUserName": "Show Username",
       "simplifyBonusNumbers": "Simplify Bonus Numbers",
-      "siteCategory": "Site Category",
-      "siteStatus": "Site Status",
+      "siteCategory": "Category",
+      "siteStatus": "Status",
       "updateAtFormatAsAlive": "Display update At as Relative Time",
       "viewStatistic": "Data Chart",
       "viewTimeline": "Timeline"
@@ -285,7 +285,7 @@
       "lastAccessAt": "Last Access At",
       "lastAccessDurationNote": "Not Access for {0} days",
       "levelName": "Level",
-      "siteStatus": "Site Status",
+      "siteStatus": "Status",
       "trueUserData": "True Data",
       "updateAt": "Updated At",
       "userData": "Data"
