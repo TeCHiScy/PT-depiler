@@ -34,10 +34,7 @@ sendMessage("getExtStorage", "config").then(async (data) => {
         // 如果当前页面的 host 在 metadataStore 中有对应的 siteId，加载 app
         const siteId = metadataStore.siteHostMap[host];
 
-        if (
-          configStore?.contentScript?.allowExceptionSites === true &&
-          metadataStore.sites[siteId]?.allowContentScript === false
-        ) {
+        if (metadataStore.sites[siteId]?.allowContentScript === false) {
           console.debug(`[PTD] Content script is disabled for site: ${siteId}`);
           return; // 如果允许排除站点，且站点配置中禁用了 contentScript，则不加载应用
         }

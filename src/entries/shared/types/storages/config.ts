@@ -42,7 +42,6 @@ export interface IConfigPiniaStorageSchema {
   contentScript: {
     enabled: boolean; // 是否启用 contentScript
     enabledAtSocialSite: boolean; // 是否允许在社交站点  contentScript 中使用
-    allowExceptionSites: boolean; // 是否允许在 contentScript 中排除站点（即站点不显示侧边栏）
 
     position: { x: number; y: number }; // 图标位置（运行时配置，用户不可以直接编辑）
 
@@ -59,8 +58,6 @@ export interface IConfigPiniaStorageSchema {
 
   // 对 MyData 页面 v-data-table 展示的额外控制项
   myDataTableControl: {
-    // 是否在站点页默认展示公开站点（搜索时始终可以搜索到公开站点）
-    showPublicSites: boolean;
     // 是否展示站点名称
     showSiteName: boolean;
     // 是否展示未读信息情况
@@ -101,12 +98,8 @@ export interface IConfigPiniaStorageSchema {
      */
     joinTimeFormat: "alive" | "added" | "aliveWeek";
 
-    // 是否使用 time_alive(过去时间) 来展示，如果不使用，则使用 time_added(发生时间) 来展示，默认不使用
-    updateAtFormatAsAlive: boolean;
     // 是否将 interval 显示为日期格式而不是持续时间格式
     showIntervalAsDate: boolean;
-    // 是否简化数字显示（将大数字转换为带单位的简化形式）
-    simplifyBonusNumbers: boolean;
 
     // 是否展示距离下一等级积分的时间（小时）
     showBonusNeededInterval: boolean;

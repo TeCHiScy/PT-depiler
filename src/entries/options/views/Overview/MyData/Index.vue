@@ -50,6 +50,7 @@ const currentDate = new Date();
 type TExtendDataTableHeader = DataTableHeader & { props?: any };
 
 type TSiteAvailability = "ready" | "needLogin" | "needToken" | "notDiscovered";
+type TSiteStatusFilter = TSiteAvailability | "public";
 
 interface ISiteCatalogItem extends Partial<IUserInfo> {
   site: TSiteID;
@@ -72,6 +73,7 @@ const fullTableHeader = reactive([
   { title: t("common.username"), key: "name", align: "center" },
   { title: t("SetSite.common.groups"), key: "siteUserConfig.groups", align: "left", sortable: false },
   { title: t("SetSite.common.isOffline"), key: "siteUserConfig.isOffline", align: "center" },
+  { title: t("SetSite.common.allowContentScript"), key: "siteUserConfig.allowContentScript", align: "center" },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
@@ -91,10 +93,12 @@ const fullTableHeader = reactive([
 ] as TExtendDataTableHeader[]);
 
 const tableHeader = computed(() => {
-  return fullTableHeader.filter(
-    (item: TExtendDataTableHeader) =>
-      item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!),
-  ) as DataTableHeader[];
+  return fullTableHeader.filter((item: TExtendDataTableHeader) => {
+    if (item.key === "siteUserConfig.allowContentScript") {
+      return true;
+    }
+    return item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!);
+  }) as DataTableHeader[];
 });
 
 const tableNonBooleanControlKey = [
@@ -102,12 +106,11 @@ const tableNonBooleanControlKey = [
   // Deprecated
   "joinTimeWeekOnly",
 ];
-const tableControlHiddenKeys = ["showPublicSites"];
 
 // 过滤出表格控制中非布尔类型的键
 const filteredTableBooleanControlKeys = computed(() => {
   return Object.keys(configStore.myDataTableControl).filter(
-    (key) => tableNonBooleanControlKey.indexOf(key) === -1 && !tableControlHiddenKeys.includes(key),
+    (key) => tableNonBooleanControlKey.indexOf(key) === -1,
   ) as (keyof typeof configStore.myDataTableControl)[];
 });
 
@@ -139,9 +142,13 @@ function getSiteAvailability(
   }
 
   if (siteMetadata.type === "private") {
-    // Cookie 只能说明浏览器存在相关站点 Cookie，只有用户信息成功解析才代表站点当前可用。
+    // Cookie 只能说明浏览器存在相关站点 Cookie；需要 Token 的站点以已配置的必填凭据作为访问信号。
+    // 两种情况下都必须再通过用户信息成功解析，才代表站点当前可用。
+    const hasConfiguredAccess = requiresManualInput
+      ? hasRequiredSiteInput(siteMetadata, siteUserConfig)
+      : hasAccess === true;
     if (
-      hasAccess !== true ||
+      !hasConfiguredAccess ||
       userInfo.status !== EResultParseStatus.success ||
       typeof userInfo.name !== "string" ||
       !userInfo.name.trim()
@@ -161,7 +168,9 @@ async function loadSiteCatalog() {
         try {
           const metadata = await getDefinedSiteMetadata(siteId);
           const storedConfig = metadataStore.sites[siteId];
-          const siteUserConfig = storedConfig ?? applySiteUserConfigDefaults(metadata);
+          const siteUserConfig = storedConfig
+            ? { ...storedConfig, allowContentScript: storedConfig.allowContentScript ?? true }
+            : applySiteUserConfigDefaults(metadata);
           const userInfo = metadataStore.lastUserInfo[siteId] ?? {};
           const cachedUserData = perSiteLastUserData.value[siteId] ?? {};
           const availability = getSiteAvailability(
@@ -215,18 +224,47 @@ const {
 });
 
 const tableSelected = ref<TSiteID[]>([]); // 选中的站点行
+const siteStatusFilter = ref<TSiteStatusFilter[]>(["ready"]);
+const siteStatusFilterItems = computed(() =>
+  (["ready", "public", "needLogin", "needToken", "notDiscovered"] as TSiteStatusFilter[]).map((value) => ({
+    title: t(`MyData.index.siteAvailability.${value}`),
+    value,
+  })),
+);
+
+function matchesSiteStatusFilter(item: ISiteCatalogItem): boolean {
+  if (siteStatusFilter.value.length === 0) return true;
+
+  return siteStatusFilter.value.some((status) => {
+    if (status === "public") return item.metadata.type === "public";
+    // 公开站点单独归类，避免默认的“可用”同时把公开站点带回来。
+    return item.metadata.type !== "public" && item.availability === status;
+  });
+}
 
 const visibleSiteCatalogData = computed(() => {
-  // 空搜索时隐藏未发现/未登录/未配置 Token 的站点；有搜索词时展示所有匹配定义。
+  // 有搜索词时展示所有匹配定义，保留“搜索不区分状态”的行为；空搜索时使用顶部状态过滤。
   if (tableFilterRef.value.trim()) {
     return siteCatalogData.value;
   }
-  return siteCatalogData.value.filter(
-    (item) =>
-      item.availability === "ready" &&
-      (configStore.myDataTableControl.showPublicSites || item.metadata.type !== "public"),
-  );
+  return siteCatalogData.value.filter(matchesSiteStatusFilter);
 });
+
+// 与 v-data-table 的最终过滤结果保持一致，工具栏操作都以这组“当前显示行”为默认范围。
+const displayedSiteCatalogData = computed(() =>
+  visibleSiteCatalogData.value.filter((item) => tableFilterFn(undefined, tableFilterRef.value, { raw: item })),
+);
+
+const actionSiteIds = computed<TSiteID[]>(() => {
+  if (tableSelected.value.length > 0) return [...tableSelected.value];
+  return displayedSiteCatalogData.value.map((item) => item.site);
+});
+
+function clearSiteCatalogSearch() {
+  tableWaitFilterRef.value = "";
+  buildFilterDictFn("");
+  updateTableFilterValueFn();
+}
 
 // 站点目录和用户数据并行初始化；站点发现只在后台执行，不阻塞首屏。
 onMounted(() => {
@@ -249,6 +287,15 @@ watchDebounced(
   { debounce: 5e3, deep: true },
 );
 
+// 编辑站点配置后，重新构建目录快照，确保 Token/URL 等配置立即参与状态判定。
+watch(
+  () => metadataStore.sites,
+  () => {
+    void loadSiteCatalog();
+  },
+  { deep: true },
+);
+
 const showHistoryDataViewDialog = ref<boolean>(false);
 const historyDataViewDialogSiteId = ref<TSiteID | null>(null);
 const showEditDialog = ref(false);
@@ -269,7 +316,7 @@ function getCatalogUserInfo(item: ISiteCatalogItem): IUserInfo | undefined {
 }
 
 async function multiOpen() {
-  for (const siteId of tableSelected.value) {
+  for (const siteId of actionSiteIds.value) {
     const siteUrl = await metadataStore.getSiteUrl(siteId);
     if (siteUrl) {
       window.open(siteUrl, "_blank", "noopener noreferrer");
@@ -290,16 +337,12 @@ async function refreshSites(sites: TSiteID[]) {
 }
 
 async function multiFlush() {
-  let flushSiteIds: TSiteID[] = tableSelected.value;
-  if (flushSiteIds.length === 0) {
-    flushSiteIds = siteCatalogData.value.filter((item) => item.selectable).map((item) => item.site);
-    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedRefreshAll"), { color: "info" });
-  }
+  const flushSiteIds = actionSiteIds.value;
 
   if (flushSiteIds.length > 0) {
     await refreshSites(flushSiteIds);
   } else {
-    runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedCancelRefresh"), { color: "warning" });
+    runtimeStore.showSnakebar(t("MyData.index.noSiteDisplayedCancelRefresh"), { color: "warning" });
   }
 }
 
@@ -307,7 +350,7 @@ function viewTimeline() {
   router.push({
     name: "UserDataTimeline",
     query: {
-      sites: tableSelected.value,
+      sites: actionSiteIds.value,
     },
   });
 }
@@ -316,7 +359,7 @@ function viewStatistic() {
   router.push({
     name: "UserDataStatistic",
     query: {
-      sites: tableSelected.value,
+      sites: actionSiteIds.value,
     },
   });
 }
@@ -354,7 +397,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
         />
 
         <v-btn
-          :disabled="tableSelected.length === 0"
+          :disabled="actionSiteIds.length === 0"
           color="indigo"
           icon="mdi-open-in-new"
           :title="t('MyData.index.multiOpen')"
@@ -362,19 +405,34 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           @click="multiOpen"
         />
 
-        <v-switch
-          v-model="configStore.myDataTableControl.showPublicSites"
-          :label="t('MyData.index.showPublicSites')"
-          class="ml-2"
-          color="success"
+        <v-combobox
+          v-model="siteStatusFilter"
+          :items="siteStatusFilterItems"
+          :label="t('MyData.index.siteStatus')"
+          :return-object="false"
+          chips
+          class="table-header-filter-clear ml-2"
+          clearable
           density="compact"
           hide-details
-          @update:model-value="() => configStore.$save()"
-        />
+          item-title="title"
+          item-value="value"
+          max-width="220"
+          multiple
+          prepend-inner-icon="mdi-filter-variant"
+        >
+          <template #chip="{ item, index }">
+            <v-chip v-if="index === 0">
+              <span>{{ item.title }}</span>
+            </v-chip>
+            <span v-if="index === 1" class="text-grey caption"> (+{{ siteStatusFilter.length - 1 }}) </span>
+          </template>
+        </v-combobox>
 
         <v-divider class="mx-2" vertical />
 
         <v-btn
+          :disabled="actionSiteIds.length === 0"
           color="green"
           icon="mdi-chart-timeline-variant"
           :title="t('MyData.index.viewTimeline')"
@@ -382,6 +440,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           @click="viewTimeline"
         />
         <v-btn
+          :disabled="actionSiteIds.length === 0"
           color="green"
           icon="mdi-equalizer"
           :title="t('MyData.index.viewStatistic')"
@@ -393,6 +452,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
 
         <!-- 导出按钮 -->
         <v-btn
+          :disabled="actionSiteIds.length === 0"
           color="orange-darken-3"
           icon="mdi-export"
           :title="t('MyData.index.exportData')"
@@ -493,7 +553,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           :label="t('common.search')"
           max-width="500"
           single-line
-          @click:clear="buildFilterDictFn('')"
+          @click:clear="clearSiteCatalogSearch"
         >
           <template #prepend-inner>
             <v-menu min-width="100">
@@ -632,6 +692,17 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           color="success"
           hide-details
           @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'isOffline', v as boolean)"
+        />
+      </template>
+
+      <template #item.siteUserConfig.allowContentScript="{ item }">
+        <v-switch
+          v-model="item.siteUserConfig.allowContentScript"
+          :disabled="!item.isConfigured || item.metadata.isDead || item.siteUserConfig.isOffline"
+          class="table-switch-btn"
+          color="success"
+          hide-details
+          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowContentScript', v as boolean)"
         />
       </template>
 
@@ -810,13 +881,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
         <template v-if="typeof item.status === 'undefined'">-</template>
         <template v-else-if="item.status === EResultParseStatus.success">
           <span class="text-wrap" :title="item.updateAt ? (formatDate(item.updateAt) as string) : '-'">
-            {{
-              item.updateAt
-                ? configStore.myDataTableControl.updateAtFormatAsAlive
-                  ? formatTimeAgo(item.updateAt)
-                  : formatDate(item.updateAt)
-                : "-"
-            }}
+            {{ item.updateAt ? formatTimeAgo(item.updateAt) : "-" }}
           </span>
         </template>
         <template v-else>
@@ -872,7 +937,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
   </v-card>
 
   <HistoryDataViewDialog v-model="showHistoryDataViewDialog" :site-id="historyDataViewDialogSiteId!" />
-  <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="tableSelected" />
+  <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="actionSiteIds" />
   <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
 </template>
 

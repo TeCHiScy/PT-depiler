@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
-import { saveAs } from "file-saver";
 import { EResultParseStatus, type IUserInfo, type TSiteID } from "@ptd/site";
 import type { DataTableHeader } from "vuetify";
 
@@ -58,16 +57,6 @@ const showStoreDataDialog = ref<boolean>(false);
 function viewStoreData(data: IShowUserInfo) {
   jsonData.value = data;
   showStoreDataDialog.value = true;
-}
-
-function exportSiteHistoryData() {
-  let exportData = siteHistoryData.value;
-  if (tableSelected.value.length > 0) {
-    exportData = siteHistoryData.value.filter((item) => tableSelected.value.includes(item.date));
-  }
-
-  const exportedSolutionBlob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
-  saveAs(exportedSolutionBlob, `site-history-data-${siteId}.json`); // FIXME filename
 }
 
 function afterEnter() {
@@ -205,7 +194,6 @@ function afterEnter() {
               :text="t('common.remove')"
               @click="deleteSiteUserInfo(tableSelected)"
             />
-            <NavButton color="info" icon="mdi-export" :text="t('common.export')" @click="exportSiteHistoryData" />
             <v-spacer />
           </template>
         </v-data-table>

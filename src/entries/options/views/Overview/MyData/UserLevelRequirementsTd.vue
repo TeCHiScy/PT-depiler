@@ -86,9 +86,7 @@ const userLevelGroupIcon = computed(() => {
 <template>
   <span v-if="userInfo.levelName" class="text-no-wrap">
     <v-tooltip
-      v-if="
-        configStore.myDataTableControl.showLevelRequirement && userLevelRequirements && userLevelRequirements.length > 0
-      "
+      v-if="userLevelRequirements && userLevelRequirements.length > 0"
       content-class="bg-white pa-0"
       interactive
       location="end bottom"

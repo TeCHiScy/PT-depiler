@@ -209,26 +209,7 @@
     "UserLevelRequirementsTd": {
       "levelList": "用户等级列表"
     },
-    "exportDialog": {
-      "exportAll": "导出全部 {count} 个站点的用户信息",
-      "exportSelected": "导出已选中的 {count} 个站点的用户信息",
-      "fields": {
-        "id": "用户ID",
-        "joinTime": "入站时间",
-        "lastAccessAt": "最近访问",
-        "levelName": "等级名称",
-        "messageCount": "消息数",
-        "siteName": "站点名称",
-        "updateAt": "更新时间"
-      },
-      "fieldsLabel": "导出字段",
-      "formatCSV": "CSV",
-      "formatJSON": "JSON",
-      "formatLabel": "导出格式",
-      "title": "导出用户信息"
-    },
     "index": {
-      "exportData": "导出数据",
       "filter": {
         "lastUpdateError": "最后更新状态异常",
         "todayNotUpdated": "今日未更新",
@@ -240,6 +221,7 @@
         "needLogin": "需要登录",
         "needToken": "需要 Token",
         "notDiscovered": "未发现",
+        "public": "公开",
         "ready": "可用"
       },
       "joinTimeFormat": "入站时间显示",
@@ -249,25 +231,16 @@
         "aliveWeek": "相对周数"
       },
       "multiOpen": "批量打开",
-      "noSiteSelectedCancelRefresh": "未选择任何站点，取消刷新",
-      "noSiteSelectedRefreshAll": "未选择任何站点，默认刷新全部站点",
+      "noSiteDisplayedCancelRefresh": "当前列表没有可刷新的站点",
       "normalizeLevelName": "使用站点定义的等级名称",
       "onlyShowUserLevelRequirement": "只显示等级要求中的升级队列",
       "setting": "设置",
       "showBonusNeededInterval": "等级要求中展示积分预估时间",
-      "showHnR": "显示 H&R",
       "showIntervalAsDate": "等级要求时间显示为日期格式",
-      "showLevelRequirement": "显示等级要求",
       "showNextLevelInDialog": "在站点等级列表中显示下一级别要求",
       "showNextLevelInTable": "在表格中显示下一级别要求",
-      "showPublicSites": "显示公开站点",
-      "showSeedingBonus": "显示做种积分",
-      "showSiteName": "显示站点名称",
-      "showUnreadMessage": "显示未读消息",
-      "simplifyBonusNumbers": "简化积分数字显示",
       "siteCategory": "分类",
       "siteStatus": "状态",
-      "updateAtFormatAsAlive": "更新时间显示为相对时间",
       "viewStatistic": "数据图表",
       "viewTimeline": "时间轴"
     },
@@ -281,10 +254,16 @@
       "lastAccessAt": "最近访问时间",
       "lastAccessDurationNote": "已经 {0} 天未访问了",
       "levelName": "等级",
+      "messageCount": "消息数",
+      "hnr": "H & R",
+      "seeding": "做种",
       "siteStatus": "状态",
       "trueUserData": "真实数据量",
       "updateAt": "更新时间",
-      "userData": "数据量"
+      "userData": "数据量",
+      "user": "用户",
+      "userId": "用户 ID",
+      "username": "用户名"
     }
   },
   "SearchEntity": {
@@ -559,7 +538,6 @@
     },
     "ui": {
       "allowDragLink": "允许拖拽链接到侧边栏按钮",
-      "allowExceptionSites": "允许设置不启用侧边栏的例外站点（启用后需在站点设置中对应关闭）",
       "basicSettings": "基本设置",
       "changeLanguage": "切换语言",
       "confirmTwoStep": "对种子列表页批量复制、本地下载等操作需要二步确认",
@@ -1065,7 +1043,9 @@
     "bonusPerHour": "时魔值",
     "downloaded": "下载量",
     "hnrPreWarning": "H&R 预警的数量",
+    "hnrPreWarningPrefix": "预警",
     "hnrUnsatisfied": "H&R 未满足的数量",
+    "hnrUnsatisfiedPrefix": "未满足",
     "interval": "需要等待的日期",
     "leeching": "下载数量",
     "posts": "发布帖子数",
@@ -1073,6 +1053,7 @@
     "seeding": "做种数",
     "seedingBonus": "做种积分",
     "seedingBonusPerHour": "做种时魔值",
+    "seedingPrefix": "做种",
     "seedingSize": "做种量",
     "seedingTime": "做种时间",
     "snatches": "完成种子数",

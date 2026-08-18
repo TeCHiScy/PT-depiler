@@ -43,13 +43,11 @@ const tableHeader = computed(() => {
       align: "center",
     },
   ];
-  if (configStore.contentScript.enabled && configStore.contentScript.allowExceptionSites) {
-    baseHeaders.push({
-      title: t("SetSite.common.allowContentScript"),
-      key: "userConfig.allowContentScript",
-      align: "center",
-    });
-  }
+  baseHeaders.push({
+    title: t("SetSite.common.allowContentScript"),
+    key: "userConfig.allowContentScript",
+    align: "center",
+  });
 
   return [...baseHeaders, { title: t("common.action"), key: "action", sortable: false }] as DataTableHeader[];
 });

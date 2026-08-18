@@ -31,11 +31,6 @@ function toggleIntervalDisplay() {
   configStore.myDataTableControl.showIntervalAsDate = !configStore.myDataTableControl.showIntervalAsDate;
 }
 
-// Toggle function for double-click to switch number simplification
-function toggleNumberSimplification() {
-  configStore.myDataTableControl.simplifyBonusNumbers = !configStore.myDataTableControl.simplifyBonusNumbers;
-}
-
 // Get interval display text and title
 function getIntervalDisplay(interval: number | isoDuration) {
   const showAsDate = configStore.myDataTableControl.showIntervalAsDate;
@@ -86,9 +81,7 @@ function formatIntervalDate(duration: number | isoDuration): string {
 
 function formatBonus(bonusKey: "bonus" | "seedingBonus") {
   return (
-    (configStore.myDataTableControl.simplifyBonusNumbers
-      ? simplifyNumber(levelRequirement[bonusKey]!)
-      : formatNumber(levelRequirement[bonusKey]!)) +
+    simplifyNumber(levelRequirement[bonusKey]!) +
     (configStore.myDataTableControl.showBonusNeededInterval && levelRequirement[`${bonusKey}NeededInterval`]
       ? ` (~${levelRequirement[`${bonusKey}NeededInterval`]})`
       : "")
@@ -172,13 +165,7 @@ function formatBonus(bonusKey: "bonus" | "seedingBonus") {
 
   <template v-if="levelRequirement.bonus">
     <v-icon :title="t('levelRequirement.bonus')" color="green-darken-4" icon="mdi-currency-usd" size="small" />
-    <span
-      :title="formatNumber(levelRequirement.bonus)"
-      @dblclick="toggleNumberSimplification"
-      style="cursor: pointer; user-select: none"
-    >
-      {{ formatBonus("bonus") }} </span
-    >;
+    <span :title="formatNumber(levelRequirement.bonus)" style="user-select: none"> {{ formatBonus("bonus") }} </span>;
   </template>
 
   <template v-if="levelRequirement.seedingBonus">
@@ -188,11 +175,7 @@ function formatBonus(bonusKey: "bonus" | "seedingBonus") {
       icon="mdi-lightning-bolt-circle"
       size="small"
     />
-    <span
-      :title="formatNumber(levelRequirement.seedingBonus)"
-      @dblclick="toggleNumberSimplification"
-      style="cursor: pointer; user-select: none"
-    >
+    <span :title="formatNumber(levelRequirement.seedingBonus)" style="user-select: none">
       {{ formatBonus("seedingBonus") }} </span
     >;
   </template>

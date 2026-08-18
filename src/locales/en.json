@@ -209,26 +209,7 @@
     "UserLevelRequirementsTd": {
       "levelList": "User Level List"
     },
-    "exportDialog": {
-      "exportAll": "Export User Info From {count} sites",
-      "exportSelected": "Export User Info from selected {count} sites",
-      "fields": {
-        "id": "User ID",
-        "joinTime": "Join Time",
-        "lastAccessAt": "Last Access",
-        "levelName": "Level",
-        "messageCount": "Messages",
-        "siteName": "Site Name",
-        "updateAt": "Updated At"
-      },
-      "fieldsLabel": "Fields",
-      "formatCSV": "CSV",
-      "formatJSON": "JSON",
-      "formatLabel": "Format",
-      "title": "Export User Info"
-    },
     "index": {
-      "exportData": "Export",
       "filter": {
         "lastUpdateError": "Last update error",
         "todayNotUpdated": "Not updated today",
@@ -240,6 +221,7 @@
         "needLogin": "Login required",
         "needToken": "Token required",
         "notDiscovered": "Not discovered",
+        "public": "Public",
         "ready": "Available"
       },
       "joinTimeFormat": "Display join time",
@@ -249,25 +231,16 @@
         "aliveWeek": "Relative Weeks"
       },
       "multiOpen": "Open in batch",
-      "noSiteSelectedCancelRefresh": "No site selected, refresh cancelled",
-      "noSiteSelectedRefreshAll": "No site selected, refreshing all sites by default",
+      "noSiteDisplayedCancelRefresh": "No visible sites to refresh",
       "normalizeLevelName": "Use Site-defined Level Name",
       "onlyShowUserLevelRequirement": "Only show the upgrade queue in level requirements",
       "setting": "Settings",
       "showBonusNeededInterval": "Show estimated bonus time in level requirements",
-      "showHnR": "Show H&R",
       "showIntervalAsDate": "Display level requirement time as date format",
-      "showLevelRequirement": "Show Level Requirement",
       "showNextLevelInDialog": "Show next level requirements in Level Requirement Dialog",
       "showNextLevelInTable": "Show next level requirements in Table",
-      "showPublicSites": "Show public sites",
-      "showSeedingBonus": "Show Seeding Bonus",
-      "showSiteName": "Show Site Name",
-      "showUnreadMessage": "Show Unread Messages",
-      "simplifyBonusNumbers": "Simplify Bonus Numbers",
       "siteCategory": "Category",
       "siteStatus": "Status",
-      "updateAtFormatAsAlive": "Display update At as Relative Time",
       "viewStatistic": "Data Chart",
       "viewTimeline": "Timeline"
     },
@@ -281,10 +254,16 @@
       "lastAccessAt": "Last Access At",
       "lastAccessDurationNote": "Not Access for {0} days",
       "levelName": "Level",
+      "messageCount": "Messages",
+      "hnr": "H & R",
+      "seeding": "Seeding",
       "siteStatus": "Status",
       "trueUserData": "True Data",
       "updateAt": "Updated At",
-      "userData": "Data"
+      "userData": "Data",
+      "user": "User",
+      "userId": "User ID",
+      "username": "Username"
     }
   },
   "SearchEntity": {
@@ -559,7 +538,6 @@
     },
     "ui": {
       "allowDragLink": "Allow dragging links to the sidebar button",
-      "allowExceptionSites": "Allow setting exception sites without sidebar (enable in site settings)",
       "basicSettings": "Basic Settings",
       "changeLanguage": "Switch Language",
       "confirmTwoStep": "Require two-step confirmation for batch copy, local download, etc. on torrent list pages",
@@ -1068,7 +1046,9 @@
     "bonusPerHour": "Bonus Gained Per Hour",
     "downloaded": "Downloaded",
     "hnrPreWarning": "PreWarning H&R Count",
+    "hnrPreWarningPrefix": "Pre-warning",
     "hnrUnsatisfied": "Unsatisfied H&R Count",
+    "hnrUnsatisfiedPrefix": "Unsatisfied",
     "interval": "Required Waiting Days",
     "leeching": "Leeching Torrents",
     "posts": "Posted Threads",
@@ -1076,6 +1056,7 @@
     "seeding": "Seeding Count",
     "seedingBonus": "Seed Points",
     "seedingBonusPerHour": "Seed Points Per Hour",
+    "seedingPrefix": "Seeding",
     "seedingSize": "Seeding Size",
     "seedingTime": "Seeding Time",
     "snatches": "Completed Torrents",

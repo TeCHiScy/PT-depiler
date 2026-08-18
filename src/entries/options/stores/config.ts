@@ -10,9 +10,19 @@ import type { IConfigPiniaStorageSchema, supportThemeType } from "@/shared/types
 import { useMetadataStore } from "./metadata.ts";
 
 const deprecatedConfigKeys = [
+  "contentScript.allowExceptionSites", // 逐站点侧边栏设置固定开启
+  "saveTableBehavior", // 表格行为记忆固定开启
   "myDataTableControl.tableFontSize", // v0.0.4.961 废弃
   "myDataTableControl.joinTimeWeekOnly", // 已废弃，使用 joinTimeFormat 替代
   "myDataTableControl.showUserName", // 用户名遮罩开关已移除，直接由表格列控制是否展示
+  "myDataTableControl.showSiteName", // 改为站点列控制
+  "myDataTableControl.showUnreadMessage", // 改为站点列控制
+  "myDataTableControl.showLevelRequirement", // 改为等级列控制
+  "myDataTableControl.showHnR", // 改为做种列控制
+  "myDataTableControl.showSeedingBonus", // 改为积分列控制
+  "myDataTableControl.updateAtFormatAsAlive", // 固定使用相对时间
+  "myDataTableControl.simplifyBonusNumbers", // 固定使用简化积分数字
+  "myDataTableControl.showPublicSites", // 改为站点状态过滤
 ];
 
 const removedSiteTableColumns = ["siteUserConfig.allowSearch", "siteUserConfig.allowQueryUserInfo"];
@@ -60,6 +70,47 @@ export const useConfigStore = defineStore("config", {
           state.tableBehavior.MyData.columns = filteredColumns;
           needsSave = true;
         }
+
+        const legacyDisplayKeys = [
+          "myDataTableControl.showSiteName",
+          "myDataTableControl.showUnreadMessage",
+          "myDataTableControl.showLevelRequirement",
+          "myDataTableControl.showHnR",
+          "myDataTableControl.showSeedingBonus",
+        ];
+        if (legacyDisplayKeys.some((key) => has(state, key))) {
+          const legacyDisplayColumns: Record<string, string> = {
+            site: "siteUserConfig.sortIndex",
+            level: "levelName",
+            hnr: "seeding",
+            seedingBonus: "bonus",
+          };
+          const legacyDisplayControl = state.myDataTableControl ?? {};
+          const legacyColumnVisibility: Record<string, boolean> = {
+            [legacyDisplayColumns.site]:
+              legacyDisplayControl.showSiteName === true || legacyDisplayControl.showUnreadMessage === true,
+            [legacyDisplayColumns.level]: legacyDisplayControl.showLevelRequirement === true,
+            [legacyDisplayColumns.hnr]: legacyDisplayControl.showHnR === true,
+            [legacyDisplayColumns.seedingBonus]: legacyDisplayControl.showSeedingBonus === true,
+          };
+
+          for (const [column, visible] of Object.entries(legacyColumnVisibility)) {
+            const hasColumn = filteredColumns.includes(column);
+            // 旧开关为 false 时隐藏对应列；为 true 时保留用户已有的列过滤选择。
+            if (!visible && hasColumn) {
+              filteredColumns.splice(filteredColumns.indexOf(column), 1);
+              needsSave = true;
+            }
+          }
+        }
+
+        if (
+          filteredColumns.length !== currentColumns.length ||
+          filteredColumns.some((x: string, i: number) => x !== currentColumns[i])
+        ) {
+          state.tableBehavior.MyData.columns = filteredColumns;
+          needsSave = true;
+        }
       }
 
       if (needsSave) {
@@ -88,7 +139,6 @@ export const useConfigStore = defineStore("config", {
     contentScript: {
       enabled: true,
       enabledAtSocialSite: true,
-      allowExceptionSites: false,
 
       position: { x: 0, y: 0 },
 
@@ -114,11 +164,15 @@ export const useConfigStore = defineStore("config", {
           "siteUserConfig.isOffline",
           "levelName",
           "uploaded",
+          "downloaded",
           "ratio",
           "uploads",
           "seeding",
           "seedingSize",
+          "hnrPreWarning",
+          "hnrUnsatisfied",
           "bonus",
+          "seedingBonus",
           "joinTime",
           "updateAt",
           "action",
@@ -181,21 +235,13 @@ export const useConfigStore = defineStore("config", {
     userName: "",
 
     myDataTableControl: {
-      showPublicSites: false,
-      showSiteName: true,
-      showUnreadMessage: true,
       normalizeLevelName: true,
-      showLevelRequirement: true,
       onlyShowUserLevelRequirement: true,
       showNextLevelInTable: false,
       showNextLevelInDialog: true,
-      showHnR: true,
-      showSeedingBonus: true,
       //joinTimeWeekOnly: false,
       joinTimeFormat: "added",
-      updateAtFormatAsAlive: false,
       showIntervalAsDate: false,
-      simplifyBonusNumbers: false,
       showBonusNeededInterval: true,
     },
 

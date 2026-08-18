@@ -6,13 +6,12 @@ import { definedLangMetaData } from "@/options/plugins/i18n.ts";
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
-import { isEmpty } from "es-toolkit/compat";
 
 const { t } = useI18n();
 const configStore = useConfigStore();
 const metadataStore = useMetadataStore();
 
-function initContentScriptExceptionSites() {
+function initContentScriptSiteSettings() {
   Object.keys(metadataStore.sites).forEach((site) => {
     if (typeof metadataStore.sites[site].allowContentScript === "undefined") {
       metadataStore.sites[site].allowContentScript = true;
@@ -22,13 +21,9 @@ function initContentScriptExceptionSites() {
 }
 
 function beforeSave() {
-  // 对从低版本升级上来的用户，在启用例外站点时，补全缺失选项
-  if (
-    configStore.contentScript.enabled &&
-    configStore.contentScript.allowExceptionSites &&
-    !isEmpty(metadataStore.sites)
-  ) {
-    initContentScriptExceptionSites();
+  // 对从低版本升级上来的用户，补全缺失的逐站点侧边栏开关
+  if (Object.keys(metadataStore.sites).length > 0) {
+    initContentScriptSiteSettings();
   }
 }
 
@@ -102,13 +97,6 @@ defineExpose({
             <v-label>{{ t("SetBase.ui.basicSettings") }}</v-label>
           </v-col>
           <v-col>
-            <v-switch
-              v-model="configStore.contentScript.allowExceptionSites"
-              color="success"
-              hide-details
-              :label="t('SetBase.ui.allowExceptionSites')"
-            />
-
             <v-switch
               v-model="configStore.contentScript.enabledAtSocialSite"
               color="success"

@@ -122,9 +122,6 @@ async function loadTorrents() {
   tableSelected.value = [];
   resetRefreshState();
   try {
-    // Pinia 的持久化状态是异步恢复的。直接进入页面时，下载器列表可能尚未恢复，
-    // 此时点击刷新不能得到任何 activeDownloaderIds；等待恢复后再计算刷新范围。
-    await metadataStore.$onReady();
     await Promise.allSettled(activeDownloaderIds.value.map((id) => loadSingleDownloader(id)));
   } finally {
     loading.value = false;
@@ -147,11 +144,10 @@ function openLegacyDownloaderSettings() {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   openLegacyDownloaderSettings();
-  await Promise.all([configStore.$onReady(), metadataStore.$onReady()]);
   if (configStore.download.initDownloaderTorrentOnEnter) {
-    await loadTorrents();
+    loadTorrents();
   }
 });
 
