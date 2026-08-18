@@ -22,7 +22,6 @@ export interface IConfigPiniaStorageSchema {
   isNavBarOpen: boolean;
 
   ignoreWrongPixelRatio: boolean;
-  showReleaseNoteOnVersionChange: boolean; // 是否在版本更新时展示更新日志
 
   saveTableBehavior: boolean;
   enableTableMultiSort: boolean; // 是否启用表格多列排序

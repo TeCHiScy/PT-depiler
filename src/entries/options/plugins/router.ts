@@ -148,18 +148,6 @@ export const routes: RouteRecordRaw[] = [
     meta: { isMainMenu: true, keepAlive: true },
     children: [
       {
-        path: "/technology-stack",
-        name: "TechnologyStack",
-        meta: { icon: "mdi-developer-board" },
-        component: () => import("../views/About/TechnologyStack.vue"),
-      },
-      {
-        path: "/special-thank",
-        name: "SpecialThank",
-        meta: { icon: "mdi-account-multiple" },
-        component: () => import("../views/About/SpecialThank.vue"),
-      },
-      {
         path: "/logger",
         name: "Logger",
         meta: { icon: "mdi-text-box-search" },

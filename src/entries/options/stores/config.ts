@@ -62,7 +62,6 @@ export const useConfigStore = defineStore("config", {
     isNavBarOpen: true,
 
     ignoreWrongPixelRatio: false,
-    showReleaseNoteOnVersionChange: true,
 
     saveTableBehavior: true,
     enableTableMultiSort: false,

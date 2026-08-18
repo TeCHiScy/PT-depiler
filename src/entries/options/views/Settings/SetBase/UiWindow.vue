@@ -55,13 +55,6 @@ defineExpose({
       </v-select>
 
       <v-switch
-        v-model="configStore.showReleaseNoteOnVersionChange"
-        color="success"
-        hide-details
-        :label="t('SetBase.ui.showReleaseNote')"
-      />
-
-      <v-switch
         v-model="configStore.saveTableBehavior"
         color="success"
         hide-details

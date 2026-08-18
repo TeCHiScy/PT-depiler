@@ -573,7 +573,6 @@
       "expandByDefault": "默认展开侧边栏按钮",
       "respondDisplayMode": "响应插件设置中的 ",
       "saveTableBehavior": "记忆部分表格的 表头列展示、排序、分页 等信息",
-      "showReleaseNote": "插件更新时显示更新日志窗口",
       "sidebarFunctions": "侧边栏功能",
       "sidebarStyle": "侧边栏样式",
       "socialSiteSearchBy": {
@@ -852,26 +851,6 @@
       "trying": "正在尝试导入站点 [{name}] ..."
     }
   },
-  "SpecialThank": {
-    "contributor": "协作者",
-    "issue": "反馈",
-    "langContributor": "语言@:SpecialThank.contributor",
-    "preWorkContributor": "前期工作@:SpecialThank.contributor",
-    "sortByName": "列表按字母排序",
-    "thankNote": [
-      "在项目的开发和测试中，他们给予了很多帮助和支持（或开发，或测试，或发💊，或建议，或鼓励，或鞭策），在此表示感谢。",
-      "列表中未能一一列出所有给予帮助的同学，也对他们表示感谢，如有遗漏敬请谅解。",
-      "同时一并感谢这些："
-    ]
-  },
-  "TechnologyStack": {
-    "dependency": "项目依赖",
-    "ptppHistory": "@:common.project 的历史",
-    "stackTableColumn": {
-      "homepage": "项目主页"
-    },
-    "thankNote": "PT 助手的诞生是建立在这些项目基础之上，在此感谢所有项目的参与人员，感谢他们的付出！"
-  },
   "UserDataStatistic": {
     "chart": {
       "chartSettings": "图表设置",
@@ -1096,15 +1075,7 @@
       "wiki": "帮助",
       "wrongPixelRatioNotice": "检测到您的页面展示可能受到缩放影响，建议您将当前页面缩放调整为100%，以保障您的浏览体验～"
     },
-    "init": "请耐心等待页面加载.....",
-    "releaseNote": {
-      "changelog": "更新日志",
-      "currentVersion": "（当前版本）",
-      "faq": "常见问题",
-      "startUsing": "开始使用",
-      "title": "欢迎使用 {extName}",
-      "wiki": "Wiki 帮助"
-    }
+    "init": "请耐心等待页面加载....."
   },
   "levelRequirement": {
     "adoptions": "认领数",
@@ -1196,8 +1167,6 @@
   "route": {
     "About": {
       "Logger": "插件运行日志",
-      "SpecialThank": "特别感谢",
-      "TechnologyStack": "项目参考与引用",
       "default": "插件相关"
     },
     "Devtools": {
