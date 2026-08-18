@@ -108,7 +108,6 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
 </script>
 
 <template>
-  <v-alert :title="t('route.Settings.SetDownloader')" type="info" />
   <v-card class="set-downloader">
     <v-card-title>
       <v-row class="ma-0">

@@ -101,7 +101,6 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
 </script>
 
 <template>
-  <v-alert :title="t('route.Settings.SetSite')" type="info" />
   <v-card class="set-site">
     <v-card-title>
       <v-row class="ma-0">

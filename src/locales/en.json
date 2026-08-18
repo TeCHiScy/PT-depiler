@@ -1166,7 +1166,7 @@
   },
   "route": {
     "About": {
-      "Logger": "Runtime Log",
+      "Logger": "Log",
       "default": "About"
     },
     "Devtools": {

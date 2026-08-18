@@ -161,9 +161,6 @@ async function copySearchSolution(solutionId: TSolutionKey) {
 </script>
 
 <template>
-  <v-alert type="info">
-    <v-alert-title> {{ t("route.Settings.SetSearchSolution") }} </v-alert-title>
-  </v-alert>
   <v-card>
     <v-card-title>
       <v-row class="ma-0">

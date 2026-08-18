@@ -205,31 +205,35 @@ async function copyLinksToClipboard(task: IKeepUploadTask) {
 </script>
 
 <template>
-  <v-alert type="info">
-    {{ t("KeepUploadTask.title") }}
-  </v-alert>
-
   <v-card>
     <v-card-title>
-      <v-btn color="error" :disabled="selectedTasks.length === 0" class="mr-2" @click="deleteSelectedTasks">
-        <v-icon class="mr-2">mdi-delete</v-icon>
-        {{ t("common.remove") }}
-      </v-btn>
+      <v-btn
+        color="error"
+        :disabled="selectedTasks.length === 0"
+        icon="mdi-delete"
+        :title="t('common.remove')"
+        variant="text"
+        @click="deleteSelectedTasks"
+      />
 
-      <v-btn color="error" :disabled="tasks.length === 0" @click="clearAllTasks">
-        <v-icon class="mr-2">mdi-delete-sweep</v-icon>
-        {{ t("KeepUploadTask.clearAll") }}
-      </v-btn>
+      <v-btn
+        color="error"
+        :disabled="tasks.length === 0"
+        icon="mdi-delete-sweep"
+        :title="t('KeepUploadTask.clearAll')"
+        variant="text"
+        @click="clearAllTasks"
+      />
 
       <v-btn
         color="info"
+        icon="mdi-help"
         href="https://github.com/pt-plugins/PT-Plugin-Plus/wiki/keep-upload-task"
-        target="_blank"
+        :title="t('common.howToUse')"
         rel="noopener noreferrer nofollow"
-        class="ml-2"
+        target="_blank"
+        variant="text"
       >
-        <v-icon class="mr-2">mdi-help</v-icon>
-        {{ t("common.howToUse") }}
       </v-btn>
     </v-card-title>
 

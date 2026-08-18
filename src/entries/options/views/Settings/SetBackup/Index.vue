@@ -10,7 +10,6 @@ import { formatDate } from "@/options/utils.ts";
 import { BackupFields, type TBackupServerKey } from "@/shared/types.ts";
 import { sendMessage } from "@/messages.ts";
 
-import NavButton from "@/options/components/NavButton.vue";
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
 import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
@@ -92,32 +91,40 @@ async function confirmDeleteBackupServer(id: TBackupServerKey) {
 </script>
 
 <template>
-  <v-alert :title="t('route.Settings.SetBackup')" type="info" />
   <v-card class="set-backup">
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
-        <NavButton
+        <v-btn
+          :title="t('common.btn.add')"
+          color="success"
+          icon="mdi-plus"
+          variant="text"
+          @click="showAddDialog = true"
+        />
+        <v-btn
           :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
           color="error"
           icon="mdi-minus"
+          :title="t('common.remove')"
+          variant="text"
           @click="deleteBackupServer(tableSelected)"
         />
 
         <v-divider class="mx-2" inset vertical />
 
-        <NavButton
+        <v-btn
           :loading="doBackupStatus[localBackup]"
           color="success"
           icon="mdi-database-export"
-          :text="t('SetBackup.localExport')"
+          :title="t('SetBackup.localExport')"
+          variant="text"
           @click="doBackup(localBackup)"
         />
-        <NavButton
+        <v-btn
           color="blue"
           icon="mdi-database-import"
-          :text="t('SetBackup.localImport')"
+          :title="t('SetBackup.localImport')"
+          variant="text"
           @click="() => (showRestoreDialog = true)"
         />
 

@@ -11,7 +11,6 @@ const { t } = useI18n();
 const logger = shallowRef<ILoggerItem[]>([]);
 
 const tableHeader = [
-  { title: "ID", value: "id", width: 150 },
   { title: "Time", value: "time", width: 100 },
   { title: "Message", value: "msg" },
   { title: t("common.action"), value: "action", width: 150 },
@@ -37,8 +36,6 @@ onMounted(() => {
 </script>
 
 <template>
-  <v-alert :title="t('route.About.Logger')" type="info" />
-
   <v-data-table
     :headers="tableHeader"
     :items="logger"
@@ -47,10 +44,6 @@ onMounted(() => {
     hover
     must-sort
   >
-    <template #item.id="{ item }">
-      <code class="text-no-wrap">{{ item.id }}</code>
-    </template>
-
     <template #item.time="{ item }">
       <span class="text-no-wrap">{{ formatDate(item.time!) }}</span>
     </template>

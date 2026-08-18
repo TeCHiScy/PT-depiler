@@ -57,7 +57,6 @@ onMounted(async () => {
 </script>
 
 <template>
-  <v-alert :title="t('route.Overview.MediaServerEntity')" type="info" />
   <v-card v-scroll="onScroll">
     <v-card-title>
       <v-row class="ma-0">

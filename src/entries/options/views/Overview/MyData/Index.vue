@@ -16,7 +16,6 @@ import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
 import SiteName from "@/options/components/SiteName.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import ResultParseStatus from "@/options/components/ResultParseStatus.vue";
-import NavButton from "@/options/components/NavButton.vue";
 import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
 import HistoryDataViewDialog from "./HistoryDataViewDialog.vue";
 import BonusFormatSpan from "./BonusFormatSpan.vue";
@@ -195,62 +194,79 @@ async function confirmDeleteSite(siteId: TSiteID) {
 </script>
 
 <template>
-  <v-alert :title="t('route.Overview.MyData')" type="info" />
   <v-card>
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
+        <v-btn
+          :title="t('common.btn.add')"
+          color="success"
+          icon="mdi-plus"
+          variant="text"
+          @click="showAddDialog = true"
+        />
 
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
           color="error"
           icon="mdi-minus"
+          :title="t('common.remove')"
+          variant="text"
           @click="deleteSite(tableSelected)"
         />
 
         <!-- 刷新，取消刷新 -->
-        <NavButton
+        <v-btn
           v-if="runtimeStore.isUserInfoFlush"
-          :text="t('MyData.index.flushCancel')"
           color="red"
           icon="mdi-cancel"
+          :title="t('MyData.index.flushCancel')"
+          variant="text"
           @click="cancelFlushSiteLastUserInfo"
         />
 
-        <NavButton
+        <v-btn
           v-else
-          :text="t('MyData.index.flushSelectSite')"
           color="green"
           icon="mdi-cached"
+          :title="t('MyData.index.flushSelectSite')"
+          variant="text"
           @click="multiFlush"
         />
 
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
           color="indigo"
           icon="mdi-open-in-new"
-          :text="t('MyData.index.multiOpen')"
+          :title="t('MyData.index.multiOpen')"
+          variant="text"
           @click="multiOpen"
         />
 
         <v-divider class="mx-2" vertical />
 
-        <NavButton
+        <v-btn
           color="green"
           icon="mdi-chart-timeline-variant"
-          :text="t('MyData.index.viewTimeline')"
+          :title="t('MyData.index.viewTimeline')"
+          variant="text"
           @click="viewTimeline"
         />
-        <NavButton color="green" icon="mdi-equalizer" :text="t('MyData.index.viewStatistic')" @click="viewStatistic" />
+        <v-btn
+          color="green"
+          icon="mdi-equalizer"
+          :title="t('MyData.index.viewStatistic')"
+          variant="text"
+          @click="viewStatistic"
+        />
 
         <v-divider class="mx-2" vertical />
 
         <!-- 导出按钮 -->
-        <NavButton
+        <v-btn
           color="orange-darken-3"
           icon="mdi-export"
-          :text="t('MyData.index.exportData')"
+          :title="t('MyData.index.exportData')"
+          variant="text"
           @click="showExportDialog = true"
         />
 
@@ -258,7 +274,7 @@ async function confirmDeleteSite(siteId: TSiteID) {
 
         <v-menu :close-on-content-clicks="false">
           <template v-slot:activator="{ props }">
-            <NavButton color="blue" icon="mdi-cog" :text="t('MyData.index.setting')" class="mr-1" v-bind="props" />
+            <v-btn v-bind="props" color="blue" icon="mdi-cog" :title="t('MyData.index.setting')" variant="text" />
           </template>
           <v-list>
             <!-- 入站时间显示 -->

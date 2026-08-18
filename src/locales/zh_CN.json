@@ -1163,7 +1163,7 @@
   },
   "route": {
     "About": {
-      "Logger": "插件运行日志",
+      "Logger": "日志",
       "default": "插件相关"
     },
     "Devtools": {

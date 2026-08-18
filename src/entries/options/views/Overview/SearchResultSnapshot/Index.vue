@@ -11,7 +11,6 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import { type TSearchSnapshotKey } from "@/shared/types.ts";
 
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
-import NavButton from "@/options/components/NavButton.vue";
 import EditNameDialog from "./EditNameDialog.vue";
 
 const { t } = useI18n();
@@ -73,15 +72,15 @@ async function confirmDeleteSearchSnapshot(searchSnapshotId: TSearchSnapshotKey)
 </script>
 
 <template>
-  <v-alert type="info" :title="t('route.Overview.SearchResultSnapshot')" />
   <v-card>
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
           color="error"
           icon="mdi-minus"
-          :text="t('common.remove')"
+          :title="t('common.remove')"
+          variant="text"
           @click="tryToDeleteSearchSnapshot(tableSelected)"
         />
 

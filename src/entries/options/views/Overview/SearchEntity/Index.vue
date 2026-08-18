@@ -159,208 +159,164 @@ const hiddenTagNamesText = computed({
 </script>
 
 <template>
-  <v-alert type="info">
-    <v-alert-title>
-      <template v-if="runtimeStore.search.startAt === 0">
-        {{ t("SearchEntity.index.alert.enterKeyword") }}
-      </template>
-      <template v-else>
-        <template v-if="runtimeStore.search.isSearching">
-          <template v-if="isSearchingParsed">
-            {{ t("SearchEntity.index.alert.paused") }}
-          </template>
-          <template v-else>
-            <template v-if="runtimeStore.search.searchResult.length > 0">
-              {{ t("SearchEntity.index.alert.plan") }}
-              [{{ metadataStore.getSearchSolutionName(runtimeStore.search.searchPlanKey) }}]，
-              {{ t("SearchEntity.index.alert.keyword") }}
-              [{{ runtimeStore.search.searchKey }}]，
-              {{ t("SearchEntity.index.alert.searchProgress", [runtimeStore.search.searchResult.length]) }}
-            </template>
-            <template v-else>
-              {{ t("SearchEntity.index.alert.searching") }}
-            </template>
-          </template>
-        </template>
-        <template v-else>
-          <template v-if="runtimeStore.search.snapshot">
-            {{ t("SearchEntity.index.alert.snapshot") }}
-            [{{ metadataStore.snapshots[runtimeStore.search.snapshot].name }}]，
-          </template>
-          <template v-else>
-            {{ t("SearchEntity.index.alert.plan") }}
-            [{{ metadataStore.getSearchSolutionName(runtimeStore.search.searchPlanKey) }}]，
-          </template>
-          {{ t("SearchEntity.index.alert.keyword") }}
-          [{{ runtimeStore.search.searchKey }}]，
-          {{ t("SearchEntity.index.alert.results", [runtimeStore.search.searchResult.length]) }}
-          {{ t("SearchEntity.index.alert.duration", [(runtimeStore.searchCostTime / 1000).toFixed(1)]) }}
-        </template>
-
-        <v-spacer />
-
-        <v-btn
-          :title="t('SearchEntity.index.alert.searchStatus')"
-          class="mr-2 status-btn"
-          color="primary"
-          size="small"
-          @click="showSearchStatusDialog = true"
-        >
-          <template v-if="searchPlanStatus.success > 0">
-            <v-icon class="mr-1" icon="mdi-check" size="x-small" />{{ searchPlanStatus.success }}
-          </template>
-          <template v-if="searchPlanStatus.error > 0">
-            <v-icon class="mr-1" color="amber" icon="mdi-alert" size="x-small" />{{ searchPlanStatus.error }}
-          </template>
-          <template v-if="searchPlanStatus.queued > 0">
-            <v-icon class="mr-1" color="blue-grey" icon="mdi-clock" size="x-small" />{{ searchPlanStatus.queued }}
-          </template>
-        </v-btn>
-      </template>
-    </v-alert-title>
-  </v-alert>
   <v-card>
-    <v-card-title>
-      <v-row class="ma-0">
-        <v-btn-group size="small" variant="text">
-          <!-- 启动/暂停 搜索队列 -->
-          <v-btn
-            v-show="isSearchingParsed"
-            :title="t('SearchEntity.index.action.start')"
-            color="success"
-            icon="mdi-play"
-            @click="() => startSearchQueue()"
-          />
-          <v-btn
-            v-show="!isSearchingParsed"
-            :title="t('SearchEntity.index.action.pause')"
-            color="success"
-            icon="mdi-pause"
-            @click="() => pauseSearchQueue()"
-          />
+    <v-card-title class="search-toolbar-title">
+      <div class="search-toolbar">
+        <div class="search-toolbar__actions">
+          <!-- 搜索状态 -->
+          <div class="search-toolbar__button-group">
+            <v-btn
+              :title="t('SearchEntity.index.alert.searchStatus')"
+              color="primary"
+              icon="mdi-list-status"
+              @click="showSearchStatusDialog = true"
+            />
+          </div>
 
-          <!-- 取消/重试 搜索队列 -->
-          <v-btn
-            v-show="runtimeStore.search.isSearching"
-            :title="t('SearchEntity.index.action.cancel')"
-            color="red"
-            icon="mdi-cancel"
-            @click="cancelSearchQueue"
-          />
-          <v-btn
-            v-show="!runtimeStore.search.isSearching"
-            :disabled="isSearchingParsed"
-            :title="t('SearchEntity.index.action.retry')"
-            color="red"
-            icon="mdi-sync"
-            @click="() => doSearch(null as unknown as string, null as unknown as string, true)"
-          />
+          <v-divider vertical class="mx-2" />
 
-          <!-- 重试失败的搜索 -->
-          <v-btn
-            :disabled="searchPlanStatus.error === 0"
-            :title="t('SearchEntity.index.action.retryFailed')"
-            color="amber"
-            icon="mdi-sync-alert"
-            @click="() => retrySearch()"
-          />
+          <!-- 搜索队列控制 -->
+          <div class="search-toolbar__button-group">
+            <v-btn
+              v-show="isSearchingParsed"
+              :title="t('SearchEntity.index.action.start')"
+              color="success"
+              icon="mdi-play"
+              @click="() => startSearchQueue()"
+            />
+            <v-btn
+              v-show="!isSearchingParsed"
+              :title="t('SearchEntity.index.action.pause')"
+              color="success"
+              icon="mdi-pause"
+              @click="() => pauseSearchQueue()"
+            />
+
+            <v-btn
+              v-show="runtimeStore.search.isSearching"
+              :title="t('SearchEntity.index.action.cancel')"
+              color="red"
+              icon="mdi-cancel"
+              @click="cancelSearchQueue"
+            />
+            <v-btn
+              v-show="!runtimeStore.search.isSearching"
+              :disabled="isSearchingParsed"
+              :title="t('SearchEntity.index.action.retry')"
+              color="red"
+              icon="mdi-sync"
+              @click="() => doSearch(null as unknown as string, null as unknown as string, true)"
+            />
+
+            <v-btn
+              :disabled="searchPlanStatus.error === 0"
+              :title="t('SearchEntity.index.action.retryFailed')"
+              color="amber"
+              icon="mdi-sync-alert"
+              @click="() => retrySearch()"
+            />
+          </div>
 
           <v-divider vertical class="mx-2" />
 
           <!-- 创建搜索快照 -->
-          <v-btn
-            :disabled="runtimeStore.search.isSearching || runtimeStore.search.searchResult.length === 0"
-            :title="t('SearchEntity.index.action.saveSnapshot')"
-            color="cyan"
-            icon="mdi-camera-plus"
-            @click="showSaveSnapshotDialog = true"
-          ></v-btn>
-        </v-btn-group>
+          <div class="search-toolbar__button-group">
+            <v-btn
+              :disabled="runtimeStore.search.isSearching || runtimeStore.search.searchResult.length === 0"
+              :title="t('SearchEntity.index.action.saveSnapshot')"
+              color="cyan"
+              icon="mdi-camera-plus"
+              @click="showSaveSnapshotDialog = true"
+            />
+          </div>
 
-        <v-divider vertical class="mx-2" />
+          <v-divider vertical class="mx-2" />
 
-        <ActionTd :torrent-items="tableSelectedRaw" />
+          <ActionTd :torrent-items="tableSelectedRaw" density="default" />
 
-        <v-divider vertical class="mx-2" />
+          <v-divider vertical class="mx-2" />
 
-        <v-menu :close-on-content-click="false">
-          <template v-slot:activator="{ props }">
-            <v-btn-group size="small" variant="text">
-              <v-btn
-                :title="t('SearchEntity.index.action.displayPreferences')"
-                color="blue"
-                icon="mdi-cog"
-                v-bind="props"
-              />
-            </v-btn-group>
-          </template>
-          <v-list>
-            <v-list-item v-for="item in filteredTableBooleanControlKeys" :key="item" :value="item">
-              <template v-slot:prepend>
-                <v-list-item-action start class="ml-2">
-                  <v-switch
-                    v-model="configStore.searchEntifyControl[item]"
-                    :label="`&nbsp;${t('SearchEntity.index.' + item)}`"
-                    color="success"
-                    density="compact"
-                    hide-details
-                    @click.stop
-                    @update:model-value="() => configStore.$save()"
-                  />
-                </v-list-item-action>
+          <div class="search-toolbar__button-group">
+            <v-menu :close-on-content-click="false">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  :title="t('SearchEntity.index.action.displayPreferences')"
+                  color="blue"
+                  icon="mdi-cog"
+                  v-bind="props"
+                />
               </template>
-            </v-list-item>
-            <v-list-item v-if="configStore.searchEntifyControl.showTorrentTag" class="mt-2">
-              <v-textarea
-                v-model="hiddenTagNamesText"
-                :label="t('SetBase.searchEntity.hiddenTagNames')"
-                hide-details
-                clearable
-                rows="5"
-              />
-            </v-list-item>
-          </v-list>
-        </v-menu>
+              <v-list>
+                <v-list-item v-for="item in filteredTableBooleanControlKeys" :key="item" :value="item">
+                  <template v-slot:prepend>
+                    <v-list-item-action start class="ml-2">
+                      <v-switch
+                        v-model="configStore.searchEntifyControl[item]"
+                        :label="`&nbsp;${t('SearchEntity.index.' + item)}`"
+                        color="success"
+                        density="compact"
+                        hide-details
+                        @click.stop
+                        @update:model-value="() => configStore.$save()"
+                      />
+                    </v-list-item-action>
+                  </template>
+                </v-list-item>
+                <v-list-item v-if="configStore.searchEntifyControl.showTorrentTag" class="mt-2">
+                  <v-textarea
+                    v-model="hiddenTagNamesText"
+                    :label="t('SetBase.searchEntity.hiddenTagNames')"
+                    hide-details
+                    clearable
+                    rows="5"
+                  />
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </div>
+        </div>
 
-        <v-combobox
-          v-model="configStore.tableBehavior.SearchEntity.columns"
-          :items="fullTableHeader"
-          :return-object="false"
-          chips
-          class="table-header-filter-clear ml-1"
-          density="compact"
-          hide-details
-          item-value="key"
-          max-width="180"
-          multiple
-          prepend-inner-icon="mdi-filter-cog"
-          @update:model-value="(v) => configStore.updateTableBehavior('SearchEntity', 'columns', v)"
-        >
-          <template #chip="{ item, index }">
-            <v-chip v-if="index === 0">
-              <span>{{ item.title }}</span>
-            </v-chip>
-            <span v-if="index === 1" class="grey--text caption">
-              (+{{ configStore.tableBehavior.SearchEntity.columns!.length - 1 }})
-            </span>
-          </template>
-        </v-combobox>
+        <div class="search-toolbar__filters">
+          <v-combobox
+            v-model="configStore.tableBehavior.SearchEntity.columns"
+            :items="fullTableHeader"
+            :return-object="false"
+            chips
+            class="table-header-filter-clear search-toolbar__column-filter"
+            density="compact"
+            hide-details
+            item-value="key"
+            max-width="180"
+            multiple
+            prepend-inner-icon="mdi-filter-cog"
+            @update:model-value="(v) => configStore.updateTableBehavior('SearchEntity', 'columns', v)"
+          >
+            <template #chip="{ item, index }">
+              <v-chip v-if="index === 0">
+                <span>{{ item.title }}</span>
+              </v-chip>
+              <span v-if="index === 1" class="grey--text caption">
+                (+{{ configStore.tableBehavior.SearchEntity.columns!.length - 1 }})
+              </span>
+            </template>
+          </v-combobox>
 
-        <v-spacer />
-        <v-text-field
-          v-model="tableWaitFilterRef"
-          append-icon="mdi-magnify"
-          clearable
-          density="compact"
-          hide-details
-          :label="t('SearchEntity.index.filterLabel')"
-          max-width="500"
-          prepend-inner-icon="mdi-filter"
-          single-line
-          @click:prepend-inner="showAdvanceFilterGenerateDialog = true"
-          @update:model-value="(val) => buildFilterDictFn(val)"
-        />
-      </v-row>
+          <v-text-field
+            v-model="tableWaitFilterRef"
+            append-icon="mdi-magnify"
+            clearable
+            class="search-toolbar__text-filter"
+            density="compact"
+            hide-details
+            :label="t('SearchEntity.index.filterLabel')"
+            max-width="500"
+            prepend-inner-icon="mdi-filter"
+            single-line
+            @click:prepend-inner="showAdvanceFilterGenerateDialog = true"
+            @update:model-value="(val) => buildFilterDictFn(val)"
+          />
+        </div>
+      </div>
     </v-card-title>
 
     <v-card-text class="pt-2 pb-0">
@@ -462,6 +418,62 @@ const hiddenTagNamesText = computed({
 </template>
 
 <style scoped lang="scss">
+.search-toolbar-title {
+  min-width: 0;
+}
+
+.search-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.search-toolbar__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  white-space: nowrap;
+
+  :deep(.v-divider) {
+    flex-shrink: 0;
+  }
+
+  :deep(.table-action) {
+    flex-shrink: 0;
+  }
+}
+
+.search-toolbar__button-group {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.search-toolbar__filters {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+}
+
+.search-toolbar__column-filter {
+  flex: 0 1 180px;
+  min-width: 0;
+}
+
+.search-toolbar__text-filter {
+  flex: 1 1 240px;
+  margin-left: auto;
+  min-width: 0;
+}
+
 #ptd-search-entity-table {
   :deep(td.v-data-table__td) {
     padding: 0 8px;

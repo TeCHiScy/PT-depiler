@@ -13,7 +13,6 @@ import SiteName from "@/options/components/SiteName.vue";
 import TorrentTitleTd from "@/options/components/TorrentTitleTd.vue";
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
 import DownloaderLabel from "@/options/components/DownloaderLabel.vue";
-import NavButton from "@/options/components/NavButton.vue";
 import ReDownloadSelectDialog from "./ReDownloadSelectDialog.vue";
 import AdvanceFilterGenerateDialog from "./AdvanceFilterGenerateDialog.vue";
 
@@ -98,33 +97,35 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-alert :title="t('route.Overview.DownloadHistory')" type="info" />
   <v-card>
     <v-card-title>
       <v-row class="ma-0">
         <!-- 按钮组 -->
-        <NavButton
+        <v-btn
           color="green"
           icon="mdi-cached"
-          :text="t('DownloadHistory.refresh')"
+          :title="t('DownloadHistory.refresh')"
+          variant="text"
           @click="() => throttleLoadDownloadHistory()"
         />
 
         <v-divider vertical class="mx-2" />
 
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
           color="primary"
           icon="mdi-tray-arrow-down"
-          :text="t('DownloadHistory.reDownload')"
+          :title="t('DownloadHistory.reDownload')"
+          variant="text"
           @click="() => reDownloadTorrent(tableSelected)"
         />
 
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
           color="error"
           icon="mdi-minus"
+          :title="t('common.remove')"
+          variant="text"
           @click="deleteDownloadHistory(tableSelected)"
         />
 

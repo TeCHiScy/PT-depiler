@@ -48,7 +48,6 @@ async function confirmDeleteMediaServer(mediaServerId: TMediaServerKey) {
 </script>
 
 <template>
-  <v-alert :title="t('route.Settings.SetMediaServer')" type="info" />
   <v-card class="set-media-server">
     <v-card-title>
       <v-row class="ma-0">
