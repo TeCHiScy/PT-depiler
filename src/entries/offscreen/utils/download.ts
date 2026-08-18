@@ -66,18 +66,6 @@ export async function getDownloaderInstance(downloaderId: string): Promise<Downl
 
 onMessage("getDownloaderConfig", async ({ data: downloaderId }) => await getDownloaderConfig(downloaderId));
 
-onMessage("getDownloaderList", async () => {
-  const metadata = (await sendMessage("getExtStorage", "metadata")) as IMetadataPiniaStorageSchema;
-  const downloaders = metadata?.downloaders ?? {};
-  return Object.entries(downloaders).map(([id, config]) => ({
-    id,
-    name: config.name ?? "",
-    type: config.type ?? "",
-    enabled: config.enabled ?? false,
-    address: config.address ?? "",
-  }));
-});
-
 onMessage("getDownloaderVersion", async ({ data: downloaderId }) => {
   let downloaderVersion = "unknown";
 

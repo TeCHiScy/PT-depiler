@@ -50,13 +50,6 @@ defineExpose({
       </v-select>
 
       <v-switch
-        v-model="configStore.saveTableBehavior"
-        color="success"
-        hide-details
-        :label="t('SetBase.ui.saveTableBehavior')"
-      />
-
-      <v-switch
         v-model="configStore.enableTableMultiSort"
         color="success"
         hide-details

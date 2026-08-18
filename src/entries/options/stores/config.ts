@@ -126,7 +126,6 @@ export const useConfigStore = defineStore("config", {
 
     ignoreWrongPixelRatio: false,
 
-    saveTableBehavior: true,
     enableTableMultiSort: false,
 
     contextMenus: {
@@ -429,9 +428,7 @@ export const useConfigStore = defineStore("config", {
     updateTableBehavior(table: string, key: string, data: any) {
       // @ts-ignore
       this.tableBehavior[table][key] = data;
-      if (this.saveTableBehavior) {
-        this.$save();
-      }
+      this.$save();
     },
 
     updateContentScriptPosition(x: number, y: number) {

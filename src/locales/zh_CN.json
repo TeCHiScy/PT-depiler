@@ -530,7 +530,6 @@
     "tab": {
       "backup": "备份恢复",
       "download": "下载",
-      "native-bridge": "原生通信桥",
       "search-entity": "@:common.search",
       "social-information": "媒体评分",
       "ui": "界面UI",
@@ -559,7 +558,6 @@
       "enableTableMultiSort": "启用部分表格的多列排序功能",
       "expandByDefault": "默认展开侧边栏按钮",
       "respondDisplayMode": "响应插件设置中的 ",
-      "saveTableBehavior": "记忆部分表格的 表头列展示、排序、分页 等信息",
       "sidebarFunctions": "侧边栏功能",
       "sidebarStyle": "侧边栏样式",
       "socialSiteSearchBy": {
@@ -684,38 +682,6 @@
     },
     "add": {
       "title": "添加媒体服务器"
-    }
-  },
-  "SetNativeBridge": {
-    "bridge": {
-      "enabled": "启用原生通信桥",
-      "status": {
-        "connected": "已连接",
-        "connecting": "连接中...",
-        "disabled": "已禁用",
-        "error": "错误",
-        "no-permission": "未授权",
-        "retrying": "重试中..."
-      },
-      "testConnection": "测试连接",
-      "title": "通信桥控制"
-    },
-    "info": {
-      "cliLink": "ptd-cli",
-      "cliRequired": "此功能需要安装外部 CLI 工具。移动平台上不可用。安装说明请参考 {0}。",
-      "description": "原生通信桥允许 PT-Depiler CLI 工具与本扩展进行通信。需要在电脑上单独安装 CLI 工具。",
-      "privacy": "启用后，原生通信桥允许本地安装的 CLI 工具访问扩展数据，包括站点配置、搜索结果、下载历史、用户信息和下载器状态。所有通信均在本地进行（浏览器与本机进程之间），不会将数据发送至任何远程服务器。您可以随时禁用此功能或撤销权限。",
-      "setupCommand": "运行以下命令将此扩展注册到 CLI 工具：",
-      "setupHint": "运行命令后，重启浏览器或点击测试连接。",
-      "title": "关于原生通信桥"
-    },
-    "permission": {
-      "grant": "授予权限",
-      "grantFailed": "权限请求被拒绝",
-      "granted": "已授权",
-      "notGranted": "未授权",
-      "revoke": "撤销权限",
-      "title": "权限"
     }
   },
   "SetSearchSolution": {

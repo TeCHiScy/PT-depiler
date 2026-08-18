@@ -530,7 +530,6 @@
     "tab": {
       "backup": "Backup & Restore",
       "download": "Download",
-      "native-bridge": "Native Bridge",
       "search-entity": "@:common.search",
       "social-information": "Social Rating",
       "ui": "Option UI",
@@ -559,7 +558,6 @@
       "enableTableMultiSort": "Enable multi-column sorting for some tables",
       "expandByDefault": "Expand sidebar button by default",
       "respondDisplayMode": "Respond to plugin setting ",
-      "saveTableBehavior": "Remember table header columns, sorting, pagination, etc.",
       "sidebarFunctions": "Sidebar Functions",
       "sidebarStyle": "Sidebar Style",
       "socialSiteSearchBy": {
@@ -684,38 +682,6 @@
     },
     "add": {
       "title": "Add Media Server"
-    }
-  },
-  "SetNativeBridge": {
-    "bridge": {
-      "enabled": "Enable Native Bridge",
-      "status": {
-        "connected": "Connected",
-        "connecting": "Connecting...",
-        "disabled": "Disabled",
-        "error": "Error",
-        "no-permission": "No Permission",
-        "retrying": "Retrying..."
-      },
-      "testConnection": "Test Connection",
-      "title": "Bridge Control"
-    },
-    "info": {
-      "cliLink": "ptd-cli",
-      "cliRequired": "The external CLI tool must be installed for this feature to work. Native bridge is not available on mobile platforms. See {0} for installation instructions.",
-      "description": "The native bridge allows the PT-Depiler CLI tool to communicate with this extension. It requires the CLI tool to be installed separately on your computer.",
-      "privacy": "When enabled, the native bridge allows the locally installed CLI tool to access extension data including site configuration, search results, download history, user info, and downloader status. All communication is local (between browser and local process) — no data is sent to remote servers. You can disable this feature or revoke the permission at any time.",
-      "setupCommand": "Run the following command to register this extension with the CLI tool:",
-      "setupHint": "After running the command, restart the browser or click Test Connection.",
-      "title": "About Native Bridge"
-    },
-    "permission": {
-      "grant": "Grant Permission",
-      "grantFailed": "Permission request was denied",
-      "granted": "Permission Granted",
-      "notGranted": "Permission Not Granted",
-      "revoke": "Revoke Permission",
-      "title": "Permission"
     }
   },
   "SetSearchSolution": {
