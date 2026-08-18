@@ -632,15 +632,20 @@ export default class MTeam extends PrivateSite {
     }
   }
 
-  // 2024-06-18 統一切換為 api.域名 (其他可用域名請自行查看接口)
+  // M-Team 的站点入口可以是 kp/xp/ob 等镜像，但 API 使用 m-team 根域名。
   get apiBaseUrl(): string {
     try {
       const apiUrl = new URL(this.normalizedSiteUrl);
-      const hostParts = apiUrl.hostname.split(".");
-      if (hostParts.length > 0) {
-        hostParts[0] = "api";
+      const mTeamDomain = apiUrl.hostname.match(/(?:^|\.)(m-team\.(?:cc|io|vip))$/i)?.[1];
+      if (mTeamDomain) {
+        apiUrl.hostname = `api.${mTeamDomain}`;
+      } else {
+        const hostParts = apiUrl.hostname.split(".");
+        if (hostParts.length > 0) {
+          hostParts[0] = "api";
+        }
+        apiUrl.hostname = hostParts.join(".");
       }
-      apiUrl.hostname = hostParts.join(".");
       return apiUrl.toString();
     } catch (error) {
       return this.normalizedSiteUrl.replace(/(.+?)\./, "https://api.");
