@@ -372,7 +372,7 @@ export default class QingWa extends NexusPHP {
     const userId = flushUserInfo.id as number;
     const userSeedingRequestString = await this.requestUserSeedingPage(userId);
 
-    let seedStatus = { seeding: 0, seedingSize: 0 };
+    let seedStatus: Partial<IUserInfo> = {};
     if (userSeedingRequestString && userSeedingRequestString?.includes("<table")) {
       const userSeedingDocument = createDocument(userSeedingRequestString);
       seedStatus.seeding = this.getFieldData(userSeedingDocument, {
@@ -384,6 +384,10 @@ export default class QingWa extends NexusPHP {
         selector: ["#total_size"],
         filters: [{ name: "parseSize" }],
       });
+    }
+
+    if (typeof seedStatus.seeding !== "number" || !Number.isFinite(seedStatus.seeding)) {
+      return super.parseUserInfoForSeedingStatus(flushUserInfo);
     }
 
     flushUserInfo = mergeWith(flushUserInfo, seedStatus, (objValue, srcValue) => {

@@ -111,6 +111,10 @@ export interface IUserInfo extends Omit<IImplicitUserInfo, "interval"> {
   trueRatio?: number; // 真实分享率
   seedingSize?: number; // 做种量
 
+  // 当统计值来自可直接访问的站点列表页时，保存对应的跳转链接
+  seedingUrl?: string;
+  snatchesUrl?: string;
+
   [key: string]: any; // 其他信息
 }
 

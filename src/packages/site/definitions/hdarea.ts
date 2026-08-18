@@ -290,7 +290,14 @@ export default class HDArea extends NexusPHP {
     flushUserInfo: Partial<IUserInfo>,
   ): Promise<Partial<IUserInfo>> {
     const count = await this.getDataCountFromSeedingPage(flushUserInfo.id as number);
-    return { ...flushUserInfo, seeding: count ?? 0 };
+    if (typeof count !== "number") {
+      return super.parseUserInfoForSeedingStatus(flushUserInfo);
+    }
+
+    return {
+      ...flushUserInfo,
+      seeding: count,
+    };
   }
 
   protected override async parseUserInfoForUploads(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {

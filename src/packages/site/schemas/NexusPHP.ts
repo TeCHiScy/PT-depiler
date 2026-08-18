@@ -74,6 +74,35 @@ export const baseUserIdSelector: string[] = [
   "a[href*='userdetails.php']:first",
 ];
 
+const baseSeedingCountSelector: IElementQuery = {
+  selector: [
+    "td.rowhead:contains('当前做种') + td",
+    "td.rowhead:contains('當前做種') + td",
+    "td.rowhead:contains('Currently Seeding') + td",
+    "td.rowhead:contains('Seeding') + td",
+  ],
+  filters: [{ name: "parseNumber" }],
+};
+
+const baseSnatchesCountSelector: IElementQuery = {
+  selector: [
+    "td.rowhead:contains('完成种子') + td",
+    "td.rowhead:contains('完成種子') + td",
+    "td.rowhead:contains('Completed Torrents') + td",
+    "td.rowhead:contains('Snatches') + td",
+  ],
+  filters: [{ name: "parseNumber" }],
+};
+
+type TUserTorrentListType = "seeding" | "completed" | "uploaded";
+
+interface IUserTorrentListStats {
+  count?: number;
+  size?: number;
+  // 只有命中列表页汇总信息时，才允许为该数字生成列表跳转链接。
+  hasListSummary?: boolean;
+}
+
 export const baseTitleQuery: IElementQuery = {
   selector: [
     "a[href^='details.php?id='][title]:has(b)",
@@ -723,7 +752,9 @@ export const SchemaMetadata: Pick<
        * 否则将使用方法 parseUserInfoForSeedingStatus 进行获取
        *
        */
-      // seeding: { }
+      // 这些 selector 只作为列表页请求失败时的详情页回退，不直接加入 process.fields。
+      seeding: baseSeedingCountSelector,
+      snatches: baseSnatchesCountSelector,
       // seedingSize: { }
     },
     process: [
@@ -745,8 +776,6 @@ export const SchemaMetadata: Pick<
           "bonus",
           "seedingBonus",
           "joinTime",
-          "seeding",
-          "seedingSize",
           "hnrUnsatisfied",
           "hnrPreWarning",
           "lastAccessAt",
@@ -848,13 +877,13 @@ export default class NexusPHP extends PrivateSite {
   public override async getUserInfoResult(lastUserInfo: Partial<IUserInfo> = {}): Promise<IUserInfo> {
     let flushUserInfo = await super.getUserInfoResult(lastUserInfo);
 
-    // 导入用户做种信息
-    if (
-      flushUserInfo.status === EResultParseStatus.success &&
-      (typeof flushUserInfo.seeding === "undefined" || typeof flushUserInfo.seedingSize === "undefined")
-    ) {
+    // 做种/完成种子优先从用户种子列表获取，列表失败时由解析方法回落到用户详情页。
+    if (flushUserInfo.status === EResultParseStatus.success) {
       await this.sleepAction(this.metadata.userInfo?.requestDelay);
       flushUserInfo = (await this.parseUserInfoForSeedingStatus(flushUserInfo)) as IUserInfo;
+
+      await this.sleepAction(this.metadata.userInfo?.requestDelay);
+      flushUserInfo = (await this.parseUserInfoForSnatches(flushUserInfo)) as IUserInfo;
     }
 
     // 导入用户发布信息
@@ -893,49 +922,157 @@ export default class NexusPHP extends PrivateSite {
     return data || null;
   }
 
-  protected async parseUserInfoForSeedingStatus(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {
-    const userId = flushUserInfo.id as number;
-    const userSeedingRequestString = await this.requestUserSeedingPage(userId);
+  /**
+   * 通用 NexusPHP 通过 AJAX 获取列表；只有直接请求完整列表页的站点，
+   * 才允许把解析出的数字链接到对应的用户种子列表。
+   */
+  protected canLinkUserTorrentList(): boolean {
+    return false;
+  }
 
-    let seedStatus = { seeding: 0, seedingSize: 0 };
-    if (userSeedingRequestString && userSeedingRequestString?.includes("<table")) {
-      const userSeedingDocument = createDocument(userSeedingRequestString);
-      /**
-       * #1060 HUDBT 等站点可能存在 seeding table 中也有 "xx | xx" 的文本，但并非我们需要的做种和做种大小信息
-       * 所以需要找到和 table 平级的 div 中包含 " | " 的文本，才认为是我们需要的做种和做种大小信息
-       * https://github.com/xiaomlove/nexusphp/blob/09b785902f5da87de7fa45dd5409eee37f78bc89/public/getusertorrentlistajax.php#L357-L358
-       */
-      const divSeeding = Sizzle("div:has( ~ table) > div:contains(' | ')", userSeedingDocument);
-      if (divSeeding.length > 0 && divSeeding[0].textContent) {
-        const seedingText = divSeeding[0].textContent.split("|");
-        seedStatus.seeding = definedFilters.parseNumber(seedingText[0]);
-        seedStatus.seedingSize = definedFilters.parseSize(seedingText[1]);
-      } else {
-        const trAnothers = Sizzle("table:last tr:not(:eq(0))", userSeedingDocument);
-        if (trAnothers.length > 0) {
-          seedStatus.seeding = trAnothers.length;
+  protected getUserTorrentListUrl(userId: number, type: TUserTorrentListType): string {
+    const url = new URL("/getusertorrentlist.php", this.url);
+    url.searchParams.set("userid", String(userId));
+    url.searchParams.set("type", type);
+    return url.toString();
+  }
 
-          // 根据自动判断应该用 td.rowfollow:eq(?)
-          let sizeIndex = 2;
-          const tdAnothers = Sizzle("> td", trAnothers[0]);
-          for (let i = 0; i < tdAnothers.length; i++) {
-            if (sizePattern.test((tdAnothers[i] as HTMLElement).innerText)) {
-              sizeIndex = i;
-              break;
-            }
-          }
+  protected parseUserTorrentListStats(data: string | null): IUserTorrentListStats {
+    if (!data) return {};
 
-          trAnothers.forEach((trAnother) => {
-            const sizeSelector = Sizzle(`td:eq(${sizeIndex})`, trAnother)[0] as HTMLElement;
-            seedStatus.seedingSize += parseSizeString(sizeSelector.innerText.trim());
-          });
-        }
-      }
+    const recordMatch = data.match(/<b[^>]*>\s*([\d,]+)\s*<\/b>\s*(?:条记录|條記錄|records)/i);
+    const stats: IUserTorrentListStats = recordMatch
+      ? { count: Number(recordMatch[1].replace(/,/g, "")), hasListSummary: true }
+      : {};
+
+    if (!recordMatch && /No record\.?|没有记录|沒有記錄/i.test(data)) {
+      return { count: 0, hasListSummary: true };
     }
 
-    flushUserInfo = mergeWith(flushUserInfo, seedStatus, (objValue, srcValue) => {
+    if (!data.includes("<table")) return stats;
+
+    const document = createDocument(data);
+    const divSeeding = Sizzle("div:has( ~ table) > div:contains(' | ')", document);
+    if (divSeeding.length > 0 && divSeeding[0].textContent) {
+      const [countText, sizeText] = divSeeding[0].textContent.split("|");
+      const count = /\d/.test(countText) ? definedFilters.parseNumber(countText) : undefined;
+      const size = /\d/.test(sizeText) ? definedFilters.parseSize(sizeText) : undefined;
+      return { ...stats, count: stats.count ?? count, size, hasListSummary: typeof count === "number" };
+    }
+
+    const tables = Sizzle("table", document);
+    if (tables.length === 0) return stats;
+
+    const rows = Sizzle("table:last tr:not(:eq(0))", document);
+    let size = 0;
+    let sizeIndex = 2;
+    if (rows.length > 0) {
+      const cells = Sizzle("> td", rows[0]);
+      for (let i = 0; i < cells.length; i++) {
+        if (sizePattern.test((cells[i] as HTMLElement).innerText)) {
+          sizeIndex = i;
+          break;
+        }
+      }
+
+      rows.forEach((row) => {
+        const sizeElement = Sizzle(`td:eq(${sizeIndex})`, row)[0] as HTMLElement | undefined;
+        if (sizeElement) size += parseSizeString(sizeElement.innerText.trim());
+      });
+    }
+
+    return { ...stats, count: stats.count ?? rows.length, size };
+  }
+
+  protected async parseUserInfoForDetailsTorrentCounts(
+    flushUserInfo: Partial<IUserInfo>,
+    fields: Array<"seeding" | "snatches">,
+  ): Promise<Partial<IUserInfo>> {
+    const userId = flushUserInfo.id as number;
+    if (!userId || fields.length === 0) return flushUserInfo;
+
+    try {
+      const { data } = await this.request<any>({
+        url: "/userdetails.php",
+        params: { id: userId },
+        responseType: "document",
+      });
+      if (!data) return flushUserInfo;
+
+      const fallback: Partial<IUserInfo> = {};
+      if (fields.includes("seeding") && typeof flushUserInfo.seeding === "undefined") {
+        const value = this.getFieldData(data, this.metadata.userInfo?.selectors?.seeding ?? baseSeedingCountSelector);
+        if (typeof value === "number" && Number.isFinite(value)) fallback.seeding = value;
+      }
+      if (fields.includes("snatches") && typeof flushUserInfo.snatches === "undefined") {
+        const value = this.getFieldData(data, this.metadata.userInfo?.selectors?.snatches ?? baseSnatchesCountSelector);
+        if (typeof value === "number" && Number.isFinite(value)) fallback.snatches = value;
+      }
+
+      return mergeWith(flushUserInfo, fallback, (objValue, srcValue) => {
+        return typeof objValue === "undefined" ? srcValue : objValue;
+      });
+    } catch (error) {
+      console.debug(`[NexusPHP] Failed to load user details fallback for ${this.metadata.id}`, error);
+      return flushUserInfo;
+    }
+  }
+
+  protected async parseUserInfoForSeedingStatus(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {
+    const userId = flushUserInfo.id as number;
+    const nextUserInfo = { ...flushUserInfo };
+    delete nextUserInfo.seedingUrl;
+    let seedStatus: Partial<IUserInfo> = {};
+    let userSeedingRequestString: string | null = null;
+    try {
+      userSeedingRequestString = await this.requestUserSeedingPage(userId);
+    } catch (error) {
+      console.debug(`[NexusPHP] Failed to load seeding list for ${this.metadata.id}`, error);
+    }
+
+    const stats = this.parseUserTorrentListStats(userSeedingRequestString);
+    if (typeof stats.count === "number") {
+      seedStatus.seeding = stats.count;
+      if (stats.hasListSummary && this.canLinkUserTorrentList()) {
+        seedStatus.seedingUrl = this.getUserTorrentListUrl(userId, "seeding");
+      }
+      if (typeof stats.size === "number") seedStatus.seedingSize = stats.size;
+    }
+
+    flushUserInfo = mergeWith(nextUserInfo, seedStatus, (objValue, srcValue) => {
       return typeof srcValue === "undefined" ? objValue : srcValue;
     });
+
+    if (typeof stats.count !== "number") {
+      flushUserInfo = await this.parseUserInfoForDetailsTorrentCounts(flushUserInfo, ["seeding"]);
+    }
+
+    return flushUserInfo;
+  }
+
+  protected async parseUserInfoForSnatches(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {
+    const userId = flushUserInfo.id as number;
+    const nextUserInfo = { ...flushUserInfo };
+    delete nextUserInfo.snatchesUrl;
+    let completedRequestString: string | null = null;
+    try {
+      completedRequestString = await this.requestUserSeedingPage(userId, "completed");
+    } catch (error) {
+      console.debug(`[NexusPHP] Failed to load completed list for ${this.metadata.id}`, error);
+    }
+
+    const stats = this.parseUserTorrentListStats(completedRequestString);
+    if (typeof stats.count === "number") {
+      flushUserInfo = {
+        ...nextUserInfo,
+        snatches: stats.count,
+        ...(stats.hasListSummary && this.canLinkUserTorrentList()
+          ? { snatchesUrl: this.getUserTorrentListUrl(userId, "completed") }
+          : {}),
+      };
+    } else {
+      flushUserInfo = await this.parseUserInfoForDetailsTorrentCounts(nextUserInfo, ["snatches"]);
+    }
 
     return flushUserInfo;
   }

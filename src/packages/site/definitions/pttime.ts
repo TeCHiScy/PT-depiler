@@ -1,7 +1,6 @@
-import { ISiteMetadata, IUserInfo } from "../types";
+import type { ISiteMetadata, IUserInfo } from "../types";
 import NexusPHP, { CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
 import { createDocument, parseSizeString } from "../utils";
-import { mergeWith } from "es-toolkit";
 
 const baseLinkQuery = {
   selector: ['a[href*="download.php?id="]'],
@@ -232,37 +231,84 @@ export default class Pttime extends NexusPHP {
     return data || null;
   }
 
+  protected override canLinkUserTorrentList(): boolean {
+    return true;
+  }
+
+  private parseUserTorrentListCount(data: string | null): number | undefined {
+    if (!data || !/<table\b/i.test(data)) return undefined;
+
+    const document = createDocument(data);
+    const value = this.getFieldData(document, {
+      selector: "#outer > span:nth-child(3) > b",
+      filters: [{ name: "parseNumber" }],
+    });
+
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  }
+
+  private parseUserTorrentListSize(data: string | null): number | undefined {
+    if (!data || !/<table\b/i.test(data)) return undefined;
+
+    const document = createDocument(data);
+    const value = this.getFieldData(document, {
+      selector: "#outer > span:nth-child(4)",
+      elementProcess: (element: Element) => {
+        const text = element.lastChild?.textContent?.trim() ?? "";
+        return text ? parseSizeString(text) : undefined;
+      },
+    });
+
+    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  }
+
   protected override async parseUserInfoForSeedingStatus(
     flushUserInfo: Partial<IUserInfo>,
   ): Promise<Partial<IUserInfo>> {
     const userId = flushUserInfo.id as number;
-    const userSeedingRequestString = await this.requestUserSeedingPage(userId);
-
-    let seedStatus = { seeding: 0, seedingSize: 0 };
-
-    if (userSeedingRequestString && userSeedingRequestString.includes("<table")) {
-      const userSeedingDocument = createDocument(userSeedingRequestString);
-
-      seedStatus.seeding =
-        this.getFieldData(userSeedingDocument, {
-          selector: "#outer > span:nth-child(3) > b",
-          filters: [{ name: "parseNumber" }],
-        }) ?? 0;
-
-      seedStatus.seedingSize =
-        this.getFieldData(userSeedingDocument, {
-          selector: "#outer > span:nth-child(4)",
-          elementProcess: (element: Element) => {
-            const text = element.lastChild?.textContent?.trim() ?? "";
-            return text ? parseSizeString(text) : 0;
-          },
-        }) ?? 0;
+    const nextUserInfo = { ...flushUserInfo };
+    delete nextUserInfo.seedingUrl;
+    let userSeedingRequestString: string | null = null;
+    try {
+      userSeedingRequestString = await this.requestUserSeedingPage(userId);
+    } catch (error) {
+      console.debug(`[PTTime] Failed to load seeding list`, error);
     }
 
-    flushUserInfo = mergeWith(flushUserInfo, seedStatus, (objValue, srcValue) => {
-      return typeof srcValue === "undefined" ? objValue : srcValue;
-    });
+    const seeding = this.parseUserTorrentListCount(userSeedingRequestString);
+    if (typeof seeding !== "number") {
+      return this.parseUserInfoForDetailsTorrentCounts(nextUserInfo, ["seeding"]);
+    }
 
-    return flushUserInfo;
+    const seedingSize = this.parseUserTorrentListSize(userSeedingRequestString);
+    return {
+      ...nextUserInfo,
+      seeding,
+      seedingUrl: this.getUserTorrentListUrl(userId, "seeding"),
+      ...(typeof seedingSize === "number" ? { seedingSize } : {}),
+    };
+  }
+
+  protected override async parseUserInfoForSnatches(flushUserInfo: Partial<IUserInfo>): Promise<Partial<IUserInfo>> {
+    const userId = flushUserInfo.id as number;
+    const nextUserInfo = { ...flushUserInfo };
+    delete nextUserInfo.snatchesUrl;
+    let completedRequestString: string | null = null;
+    try {
+      completedRequestString = await this.requestUserSeedingPage(userId, "completed");
+    } catch (error) {
+      console.debug(`[PTTime] Failed to load completed list`, error);
+    }
+
+    const snatches = this.parseUserTorrentListCount(completedRequestString);
+    if (typeof snatches !== "number") {
+      return this.parseUserInfoForDetailsTorrentCounts(nextUserInfo, ["snatches"]);
+    }
+
+    return {
+      ...nextUserInfo,
+      snatches,
+      snatchesUrl: this.getUserTorrentListUrl(userId, "completed"),
+    };
   }
 }

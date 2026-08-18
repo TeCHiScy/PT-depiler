@@ -29,7 +29,6 @@ import EditSearchEntryList from "../../Settings/SetSite/EditSearchEntryList.vue"
 import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
 import HistoryDataViewDialog from "./HistoryDataViewDialog.vue";
 import BonusFormatSpan from "./BonusFormatSpan.vue";
-import ExportUserInfoDialog from "./ExportUserInfoDialog.vue";
 
 import { formatRatio } from "./utils/format.ts";
 import {
@@ -70,7 +69,7 @@ const fullTableHeader = reactive([
     props: { disabled: true },
   },
   { title: t("MyData.table.siteStatus"), key: "availability", align: "center", sortable: false },
-  { title: t("common.username"), key: "name", align: "center" },
+  { title: t("MyData.table.user"), key: "name", align: "center" },
   { title: t("SetSite.common.groups"), key: "siteUserConfig.groups", align: "left", sortable: false },
   { title: t("SetSite.common.isOffline"), key: "siteUserConfig.isOffline", align: "center" },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
@@ -80,10 +79,13 @@ const fullTableHeader = reactive([
   { title: t("levelRequirement.ratio"), key: "ratio", align: "end" },
   { title: t("levelRequirement.trueRatio"), key: "trueRatio", align: "end" }, // 默认不显示
   { title: t("levelRequirement.uploads"), key: "uploads", align: "end" },
-  { title: t("levelRequirement.seeding"), key: "seeding", align: "end" },
-  { title: t("levelRequirement.seedingSize"), key: "seedingSize", align: "end" },
+  { title: t("levelRequirement.leeching"), key: "leeching", align: "end" }, // 默认不显示
+  { title: t("levelRequirement.snatches"), key: "snatches", align: "end" }, // 默认不显示
+  { title: t("MyData.table.seeding"), key: "seeding", align: "end" },
+  { title: t("MyData.table.hnr"), key: "hnrPreWarning", align: "end" },
   { title: t("levelRequirement.bonus"), key: "bonus", align: "end" },
   { title: t("levelRequirement.bonusPerHour"), key: "bonusPerHour", align: "end" },
+  { title: t("MyData.table.messageCount"), key: "messageCount", align: "end" }, // 默认不显示
   { title: t("MyData.table.invites"), key: "invites", align: "end" }, // 默认不显示
   { title: t("MyData.table.joinTime"), key: "joinTime", align: "center" },
   { title: t("MyData.table.lastAccessAt"), key: "lastAccessAt", align: "center" }, // 默认不显示
@@ -92,11 +94,95 @@ const fullTableHeader = reactive([
 ] as TExtendDataTableHeader[]);
 
 const tableHeader = computed(() => {
+  const columns = configStore.tableBehavior.MyData.columns ?? [];
   return fullTableHeader.filter(
     (item: TExtendDataTableHeader) =>
-      item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!),
+      item?.props?.disabled ||
+      columns.includes(item.key!) ||
+      (item.key === "name" && columns.includes("id")) ||
+      (item.key === "uploaded" && columns.includes("downloaded")) ||
+      (item.key === "trueUploaded" && columns.includes("trueDownloaded")) ||
+      (item.key === "bonus" && columns.includes("seedingBonus")) ||
+      (item.key === "bonusPerHour" && columns.includes("seedingBonusPerHour")) ||
+      (item.key === "seeding" && columns.includes("seedingSize")) ||
+      (item.key === "hnrPreWarning" && columns.includes("hnrUnsatisfied")),
   ) as DataTableHeader[];
 });
+
+const hasAnyColumn = (columns: string[], ...keys: string[]) => keys.some((key) => columns.includes(key));
+
+const showUploaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "uploaded"));
+const showDownloaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "downloaded"));
+const showTrueUploaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "trueUploaded"));
+const showTrueDownloaded = computed(() =>
+  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "trueDownloaded"),
+);
+const showBonus = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "bonus"));
+const showSeedingBonus = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingBonus"));
+const showBonusPerHour = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "bonusPerHour"));
+const showSeedingBonusPerHour = computed(() =>
+  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingBonusPerHour"),
+);
+const showSeeding = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seeding"));
+const showSeedingSize = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingSize"));
+const showHnrPreWarning = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "hnrPreWarning"));
+const showHnrUnsatisfied = computed(() =>
+  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "hnrUnsatisfied"),
+);
+
+const showUserName = computed(() => configStore.tableBehavior.MyData.columns?.includes("name") ?? false);
+const showUserId = computed(() => configStore.tableBehavior.MyData.columns?.includes("id") ?? false);
+
+const tableFilterHeaders = computed(() => {
+  const headers: TExtendDataTableHeader[] = [];
+  for (const item of fullTableHeader) {
+    if (item?.props?.disabled) continue;
+
+    if (item.key === "name") {
+      headers.push({ ...item, title: t("MyData.table.username") });
+      headers.push({ title: t("MyData.table.userId"), key: "id", align: "center" });
+    } else if (item.key === "uploaded") {
+      headers.push({ ...item, title: t("levelRequirement.uploaded") });
+      headers.push({ title: t("levelRequirement.downloaded"), key: "downloaded", align: "end" });
+    } else if (item.key === "trueUploaded") {
+      headers.push({ ...item, title: t("levelRequirement.trueUploaded") });
+      headers.push({ title: t("levelRequirement.trueDownloaded"), key: "trueDownloaded", align: "end" });
+    } else if (item.key === "bonus") {
+      headers.push({ ...item, title: t("levelRequirement.bonus") });
+      headers.push({ title: t("levelRequirement.seedingBonus"), key: "seedingBonus", align: "end" });
+    } else if (item.key === "bonusPerHour") {
+      headers.push({ ...item, title: t("levelRequirement.bonusPerHour") });
+      headers.push({ title: t("levelRequirement.seedingBonusPerHour"), key: "seedingBonusPerHour", align: "end" });
+    } else if (item.key === "seeding") {
+      headers.push({ ...item, title: t("MyData.table.seeding") });
+      headers.push({ title: t("levelRequirement.seedingSize"), key: "seedingSize", align: "end" });
+    } else if (item.key === "hnrPreWarning") {
+      headers.push({ ...item, title: t("levelRequirement.hnrPreWarning") });
+      headers.push({ title: t("levelRequirement.hnrUnsatisfied"), key: "hnrUnsatisfied", align: "end" });
+    } else {
+      headers.push(item);
+    }
+  }
+  return headers;
+});
+const alwaysVisibleTableColumns = computed(() =>
+  fullTableHeader
+    .filter((item: TExtendDataTableHeader) => item?.props?.disabled)
+    .map((item: TExtendDataTableHeader) => item.key!),
+);
+const tableFilterColumns = computed(() =>
+  [...new Set(configStore.tableBehavior.MyData.columns ?? [])].filter((key) =>
+    tableFilterHeaders.value.some((item) => item.key === key),
+  ),
+);
+
+function updateTableFilterColumns(columns: string[]) {
+  const uniqueColumns = [...new Set(columns)];
+  configStore.updateTableBehavior("MyData", "columns", [
+    ...alwaysVisibleTableColumns.value,
+    ...uniqueColumns.filter((column) => !alwaysVisibleTableColumns.value.includes(column)),
+  ]);
+}
 
 const tableNonBooleanControlKey = [
   "joinTimeFormat",
@@ -361,8 +447,6 @@ function viewStatistic() {
   });
 }
 
-const showExportDialog = ref(false);
-
 watch(showEditDialog, (isOpen, wasOpen) => {
   if (wasOpen && !isOpen) {
     void Promise.all([loadSiteCatalog(), initTableData()]);
@@ -447,16 +531,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
 
         <v-divider class="mx-2" vertical />
 
-        <!-- 导出按钮 -->
-        <v-btn
-          :disabled="actionSiteIds.length === 0"
-          color="orange-darken-3"
-          icon="mdi-export"
-          :title="t('MyData.index.exportData')"
-          variant="text"
-          @click="showExportDialog = true"
-        />
-
         <v-divider class="mx-2" vertical />
 
         <v-menu :close-on-content-clicks="false">
@@ -516,8 +590,8 @@ watch(showEditDialog, (isOpen, wasOpen) => {
         </v-menu>
 
         <v-combobox
-          v-model="configStore.tableBehavior.MyData.columns"
-          :items="fullTableHeader"
+          :model-value="tableFilterColumns"
+          :items="tableFilterHeaders"
           :return-object="false"
           chips
           class="table-header-filter-clear"
@@ -527,15 +601,13 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           max-width="200"
           multiple
           prepend-inner-icon="mdi-filter-cog"
-          @update:model-value="(v) => configStore.updateTableBehavior('MyData', 'columns', v)"
+          @update:model-value="updateTableFilterColumns"
         >
           <template #chip="{ item, index }">
             <v-chip v-if="index === 0">
               <span>{{ item.title }}</span>
             </v-chip>
-            <span v-if="index === 1" class="text-grey caption">
-              (+{{ configStore.tableBehavior.MyData.columns!.length - 1 }})
-            </span>
+            <span v-if="index === 1" class="text-grey caption"> (+{{ tableFilterColumns.length - 1 }}) </span>
           </template>
         </v-combobox>
 
@@ -646,21 +718,21 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <template #item.siteUserConfig.sortIndex="{ item }">
         <div class="d-flex flex-column align-center">
           <v-badge
-            :model-value="configStore.myDataTableControl.showUnreadMessage && (item.messageCount ?? 0) > 0"
+            :model-value="(item.messageCount ?? 0) > 0"
             :content="(item.messageCount ?? 0) > 10 ? undefined : item.messageCount"
             color="error"
           >
             <div class="favicon-hover-wrapper favicon-hover-bg">
               <SiteFavicon
                 :site-id="item.site"
-                :size="configStore.myDataTableControl.showSiteName ? 18 : 24"
+                :size="18"
                 :title="t('SetSite.common.open')"
                 @click="() => openSite(item.site)"
               />
             </div>
           </v-badge>
 
-          <span v-if="configStore.myDataTableControl.showSiteName" class="text-no-wrap">{{ item.siteName }}</span>
+          <span class="text-no-wrap">{{ item.siteName }}</span>
         </div>
       </template>
 
@@ -670,11 +742,17 @@ watch(showEditDialog, (isOpen, wasOpen) => {
         </v-chip>
       </template>
 
-      <!-- 用户名，用户ID -->
+      <!-- 用户名、用户 ID -->
       <template #item.name="{ item }">
-        <span :title="item.id as string" class="text-no-wrap">
-          {{ item.name ?? "-" }}
-        </span>
+        <div class="d-flex flex-column align-center">
+          <span v-if="showUserName" class="text-no-wrap">{{ item.name ?? "-" }}</span>
+          <span
+            v-if="showUserId && typeof item.id !== 'undefined'"
+            class="text-caption text-medium-emphasis text-no-wrap"
+          >
+            ID: {{ item.id }}
+          </span>
+        </div>
       </template>
 
       <template #item.siteUserConfig.groups="{ item }">
@@ -701,13 +779,13 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <!-- 上传、下载 -->
       <template #item.uploaded="{ item }">
         <v-container>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row v-if="showUploaded" class="flex-nowrap" justify="end">
             <span class="text-no-wrap">
               {{ typeof item.uploaded !== "undefined" ? formatSize(item.uploaded) : "-" }}
             </span>
             <v-icon color="green-darken-4" icon="mdi-chevron-up" size="small"></v-icon>
           </v-row>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row v-if="showDownloaded" class="flex-nowrap" justify="end">
             <span class="text-no-wrap">
               {{ typeof item.downloaded !== "undefined" ? formatSize(item.downloaded) : "-" }}
             </span>
@@ -719,13 +797,13 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <!-- 真实上传、下载 -->
       <template #item.trueUploaded="{ item }">
         <v-container>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row v-if="showTrueUploaded" class="flex-nowrap" justify="end">
             <span class="text-no-wrap">
               {{ typeof item.trueUploaded !== "undefined" ? formatSize(item.trueUploaded) : "-" }}
             </span>
             <v-icon color="green-darken-4" icon="mdi-chevron-up" size="small"></v-icon>
           </v-row>
-          <v-row class="flex-nowrap" justify="end">
+          <v-row v-if="showTrueDownloaded" class="flex-nowrap" justify="end">
             <span class="text-no-wrap">
               {{ typeof item.trueDownloaded !== "undefined" ? formatSize(item.trueDownloaded) : "-" }}
             </span>
@@ -749,65 +827,71 @@ watch(showEditDialog, (isOpen, wasOpen) => {
         <span class="text-no-wrap">{{ item.uploads ?? "-" }}</span>
       </template>
 
-      <!-- 做种数， H&R 情况  -->
+      <template #item.leeching="{ item }">
+        <span class="text-no-wrap">{{ item.leeching ?? "-" }}</span>
+      </template>
+
+      <template #item.snatches="{ item }">
+        <a
+          v-if="item.snatchesUrl"
+          :href="item.snatchesUrl"
+          class="text-no-wrap"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click.stop
+        >
+          {{ item.snatches ?? "-" }}
+        </a>
+        <span v-else class="text-no-wrap">{{ item.snatches ?? "-" }}</span>
+      </template>
+
+      <!-- 做种数/做种量 -->
       <template #item.seeding="{ item }">
         <v-container class="py-0">
-          <v-row align="center" class="flex-nowrap my-0" justify="end">
-            <span class="text-no-wrap">{{ item.seeding ?? "-" }}</span>
+          <v-row v-if="showSeeding" align="center" class="flex-nowrap my-0" justify="end">
+            <a
+              v-if="item.seedingUrl"
+              :href="item.seedingUrl"
+              class="text-no-wrap"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click.stop
+            >
+              {{ item.seeding ?? "-" }}
+            </a>
+            <span v-else class="text-no-wrap">{{ item.seeding ?? "-" }}</span>
           </v-row>
-          <v-row v-if="configStore.myDataTableControl.showHnR" align="center" class="flex-nowrap my-0" justify="end">
-            <span
-              v-if="typeof item.hnrPreWarning !== 'undefined' && item.hnrPreWarning > 0"
-              class="d-inline-flex align-center ml-2"
-            >
-              <v-icon
-                :title="t('levelRequirement.hnrPreWarning')"
-                color="yellow-darken-4"
-                icon="mdi-alert"
-                size="small"
-              />
-              <span class="text-no-wrap">
-                {{ item.hnrPreWarning }}
-              </span>
-            </span>
-            <span
-              v-if="typeof item.hnrUnsatisfied !== 'undefined' && item.hnrUnsatisfied > 0"
-              class="d-inline-flex align-center ml-1"
-            >
-              <v-icon
-                :title="t('levelRequirement.hnrUnsatisfied')"
-                color="red-darken-4"
-                icon="mdi-alert-circle"
-                size="small"
-              />
-              <span class="text-no-wrap">
-                {{ item.hnrUnsatisfied }}
-              </span>
+          <v-row v-if="showSeedingSize" align="center" class="flex-nowrap my-0" justify="end">
+            <span class="text-no-wrap">
+              {{ typeof item.seedingSize !== "undefined" ? formatSize(item.seedingSize) : "-" }}
             </span>
           </v-row>
         </v-container>
       </template>
 
-      <!-- 做种量 -->
-      <template #item.seedingSize="{ item }">
-        <span class="text-no-wrap">
-          {{ typeof item.seedingSize !== "undefined" ? formatSize(item.seedingSize) : "-" }}
-        </span>
+      <!-- H&R -->
+      <template #item.hnrPreWarning="{ item }">
+        <v-container class="py-0">
+          <v-row v-if="showHnrPreWarning" align="center" class="flex-nowrap my-0" justify="end">
+            <span class="text-no-wrap mr-1">{{ t("levelRequirement.hnrPreWarningPrefix") }}:</span>
+            <span class="text-no-wrap">{{ item.hnrPreWarning ?? "-" }}</span>
+          </v-row>
+          <v-row v-if="showHnrUnsatisfied" align="center" class="flex-nowrap my-0" justify="end">
+            <span class="text-no-wrap mr-1">{{ t("levelRequirement.hnrUnsatisfiedPrefix") }}:</span>
+            <span class="text-no-wrap">{{ item.hnrUnsatisfied ?? "-" }}</span>
+          </v-row>
+        </v-container>
       </template>
 
       <!-- 魔力/积分 -->
       <template #item.bonus="{ item }">
         <v-container>
-          <v-row align="center" class="flex-nowrap" justify="end">
+          <v-row v-if="showBonus" align="center" class="flex-nowrap" justify="end">
             <v-icon :title="t('levelRequirement.bonus')" color="green-darken-4" icon="mdi-currency-usd" size="small" />
             <BonusFormatSpan :num="item.bonus" />
           </v-row>
           <v-row
-            v-if="
-              configStore.myDataTableControl.showSeedingBonus &&
-              item.seedingBonus !== '' &&
-              !isUndefined(item.seedingBonus)
-            "
+            v-if="showSeedingBonus && item.seedingBonus !== '' && !isUndefined(item.seedingBonus)"
             align="center"
             class="flex-nowrap"
             justify="end"
@@ -824,7 +908,19 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       </template>
 
       <template #item.bonusPerHour="{ item }">
-        <BonusFormatSpan :num="item.bonusPerHour" />
+        <v-container>
+          <v-row v-if="showBonusPerHour" align="center" class="flex-nowrap" justify="end">
+            <BonusFormatSpan :num="item.bonusPerHour" />
+          </v-row>
+          <v-row v-if="showSeedingBonusPerHour" align="center" class="flex-nowrap" justify="end">
+            <span class="text-no-wrap mr-1">{{ t("levelRequirement.seedingPrefix") }}:</span>
+            <BonusFormatSpan :num="item.seedingBonusPerHour" />
+          </v-row>
+        </v-container>
+      </template>
+
+      <template #item.messageCount="{ item }">
+        <span class="text-no-wrap">{{ item.messageCount ?? "-" }}</span>
       </template>
 
       <template #item.invites="{ item }">
@@ -923,7 +1019,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
   </v-card>
 
   <HistoryDataViewDialog v-model="showHistoryDataViewDialog" :site-id="historyDataViewDialogSiteId!" />
-  <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="actionSiteIds" />
   <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
 </template>
 

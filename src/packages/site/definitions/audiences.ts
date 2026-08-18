@@ -487,6 +487,10 @@ export default class Audiences extends NexusPHP {
       }
     }
 
+    if (typeof seedStatus.seeding !== "number" || !Number.isFinite(seedStatus.seeding)) {
+      return super.parseUserInfoForSeedingStatus(flushUserInfo);
+    }
+
     flushUserInfo = mergeWith(flushUserInfo, seedStatus, (objValue, srcValue) => {
       return typeof srcValue === "undefined" ? objValue : srcValue;
     });

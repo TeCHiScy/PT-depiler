@@ -350,13 +350,18 @@ export default class sjtu extends NexusPHP {
     flushUserInfo: Partial<IUserInfo>,
   ): Promise<Partial<IUserInfo>> {
     const userId = flushUserInfo.id as number;
-    const userSeedingRequestResponse = await this.request<string>({
-      url: "/viewusertorrents.php",
-      params: { id: userId, show: "seeding" },
-    });
-    const userSeedingRequestString = userSeedingRequestResponse.data;
+    let userSeedingRequestString: string | undefined;
+    try {
+      const userSeedingRequestResponse = await this.request<string>({
+        url: "/viewusertorrents.php",
+        params: { id: userId, show: "seeding" },
+      });
+      userSeedingRequestString = userSeedingRequestResponse.data;
+    } catch {
+      return super.parseUserInfoForSeedingStatus(flushUserInfo);
+    }
 
-    let seedStatus = { seeding: 0, seedingSize: 0 };
+    let seedStatus: Partial<IUserInfo> = {};
     if (userSeedingRequestString && userSeedingRequestString?.includes("<table")) {
       const userSeedingDocument = createDocument(userSeedingRequestString);
 
@@ -366,9 +371,13 @@ export default class sjtu extends NexusPHP {
       rows.forEach((row) => {
         const sizeElement = row.querySelector("td:nth-child(3)");
         if (sizeElement) {
-          seedStatus.seedingSize += parseSizeString(sizeElement.textContent || "0");
+          seedStatus.seedingSize = (seedStatus.seedingSize ?? 0) + parseSizeString(sizeElement.textContent || "0");
         }
       });
+    }
+
+    if (typeof seedStatus.seeding !== "number") {
+      return super.parseUserInfoForSeedingStatus(flushUserInfo);
     }
 
     flushUserInfo = mergeWith(flushUserInfo, seedStatus, (objValue, srcValue) => {

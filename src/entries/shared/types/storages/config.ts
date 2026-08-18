@@ -57,14 +57,8 @@ export interface IConfigPiniaStorageSchema {
 
   // 对 MyData 页面 v-data-table 展示的额外控制项
   myDataTableControl: {
-    // 是否展示站点名称
-    showSiteName: boolean;
-    // 是否展示未读信息情况
-    showUnreadMessage: boolean;
     // 是否使用站点定义中的 levelRequirements 中的名称来统一显示等级名称，如果不使用，则直接显示为 getUserInfo 获取到的信息
     normalizeLevelName: boolean;
-    // 是否展示升级情况及站点等级情况
-    showLevelRequirement: boolean;
 
     /**
      * 是否只展示站点等级定义中 UserGroup = ‘user’ 字段的等级要求
@@ -77,13 +71,8 @@ export interface IConfigPiniaStorageSchema {
 
     // 在表格中展示升级情况的方式
     showNextLevelInTable: boolean;
-    // 在站点登记信息中展示升级情况的方式（需要先设置 showLevelRequirement 为 true）
+    // 在站点等级信息浮层中展示升级情况的方式
     showNextLevelInDialog: boolean;
-
-    // 是否展示HnR
-    showHnR: boolean;
-    // 是否展示保种积分
-    showSeedingBonus: boolean;
 
     // Deprecated 加入时间显示为周数，使用 joinTimeFormat
     // joinTimeWeekOnly: boolean;

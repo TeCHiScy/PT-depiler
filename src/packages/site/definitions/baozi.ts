@@ -285,7 +285,6 @@ export default class BaoZi extends NexusPHP {
           return sizeText ? parseSizeString(sizeText) : 0;
         },
       }) ?? 0;
-
     return flushUserInfo;
   }
 }
