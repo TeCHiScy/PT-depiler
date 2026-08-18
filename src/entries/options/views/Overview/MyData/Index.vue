@@ -9,7 +9,6 @@ import {
   applySiteUserConfigDefaults,
   definitionList,
   EResultParseStatus,
-  getDefinedSiteMetadata,
   type ISiteMetadata,
   type ISiteUserConfig,
   type IUserInfo,
@@ -21,6 +20,7 @@ import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
+import { getCachedSiteMetadata } from "@/options/utils/siteDefinitionCache.ts";
 
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import ResultParseStatus from "@/options/components/ResultParseStatus.vue";
@@ -249,7 +249,7 @@ async function loadSiteCatalog() {
     const rows = await Promise.all(
       (definitionList as TSiteID[]).map(async (siteId) => {
         try {
-          const metadata = await getDefinedSiteMetadata(siteId);
+          const metadata = await getCachedSiteMetadata(siteId);
           const storedConfig = metadataStore.sites[siteId];
           const siteUserConfig = storedConfig
             ? { ...storedConfig, allowContentScript: storedConfig.allowContentScript ?? true }
@@ -349,11 +349,23 @@ function clearSiteCatalogSearch() {
   updateTableFilterValueFn();
 }
 
-// 站点目录和用户数据并行初始化；站点发现只在后台执行，不阻塞首屏。
-onMounted(() => {
-  void Promise.all([loadSiteCatalog(), initTableData()]);
-  void metadataStore.discoverSites({ force: true }).then(async () => {
+// 等待持久化站点数据恢复后再初始化，避免发现结果被旧状态覆盖；目录加载和发现共享定义缓存。
+async function initializeSitePage() {
+  await metadataStore.$onReady();
+
+  const [, discoveryResult] = await Promise.all([
+    Promise.all([loadSiteCatalog(), initTableData()]),
+    metadataStore.discoverSites({ force: true }),
+  ]);
+
+  if (discoveryResult.changed) {
     await Promise.all([loadSiteCatalog(), initTableData()]);
+  }
+}
+
+onMounted(() => {
+  void initializeSitePage().catch((error) => {
+    console.warn("[PTD] Failed to initialize site page", error);
   });
 });
 

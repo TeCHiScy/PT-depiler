@@ -30,6 +30,7 @@ import { sendMessage } from "@/messages.ts";
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { buildSiteMaps, getSiteMapVersion } from "@/shared/utils/siteMap.ts";
+import { getCachedSiteMetadata } from "@/options/utils/siteDefinitionCache.ts";
 
 type TSimplePatchFieldKey = keyof Pick<
   IMetadataPiniaStorageSchema,
@@ -39,6 +40,7 @@ type TSimplePatchFieldKey = keyof Pick<
 interface ISiteDiscoveryResult {
   added: number;
   failed: number;
+  changed: boolean;
 }
 
 interface ISiteDiscoveryOptions {
@@ -448,7 +450,7 @@ export const useMetadataStore = defineStore("metadata", {
         const available = discovery.available ?? {};
 
         if (!force && discovery.version === discoveryVersion) {
-          return { added: 0, failed: 0 };
+          return { added: 0, failed: 0, changed: false };
         }
 
         const siteIdsToScan = (definitionList as TSiteID[]).filter((siteId) => !ignored[siteId] || this.sites[siteId]);
@@ -459,7 +461,7 @@ export const useMetadataStore = defineStore("metadata", {
         const discoveryResults = await Promise.all(
           siteIdsToScan.map(async (siteId) => {
             try {
-              const siteMetadata = await getDefinedSiteMetadata(siteId);
+              const siteMetadata = await getCachedSiteMetadata(siteId);
               const requiresManualInput = (siteMetadata.userInputSettingMeta?.length ?? 0) > 0;
 
               if (siteMetadata.isDead || requiresManualInput) {
@@ -491,8 +493,12 @@ export const useMetadataStore = defineStore("metadata", {
         }
 
         const siteConfigs: Record<TSiteID, ISiteUserConfig> = {};
+        let changed = false;
         for (const { siteId, siteMetadata } of discoverableSites) {
           const hasAccess = siteMetadata.type === "public" || hasSiteCookie(siteMetadata, cookies);
+          if (available[siteId] !== hasAccess) {
+            changed = true;
+          }
           available[siteId] = hasAccess;
 
           if (!hasAccess) {
@@ -502,6 +508,7 @@ export const useMetadataStore = defineStore("metadata", {
           if (!this.sites[siteId] && !ignored[siteId]) {
             siteConfigs[siteId] = applySiteUserConfigDefaults(siteMetadata);
             discoveredSiteIds.push(siteId);
+            changed = true;
           }
         }
 
@@ -521,7 +528,7 @@ export const useMetadataStore = defineStore("metadata", {
         };
 
         await this.$save();
-        return { added: Object.keys(siteConfigs).length, failed };
+        return { added: Object.keys(siteConfigs).length, failed, changed };
       })();
 
       try {
