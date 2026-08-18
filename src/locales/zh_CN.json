@@ -1177,13 +1177,13 @@
       "MediaServerEntity": "媒体库",
       "MyClient": "我的下载器",
       "MyCollection": "收藏列表",
-      "MyData": "我的数据",
+      "MyData": "站点",
       "SearchEntity": "搜索结果",
       "SearchResultSnapshot": "搜索结果快照",
       "default": "概览"
     },
     "Settings": {
-      "SetBackup": "参数备份与恢复",
+      "SetBackup": "备份与恢复",
       "SetBase": "常规设置",
       "SetDownloader": "下载器设置",
       "SetMediaServer": "媒体服务器设置",
