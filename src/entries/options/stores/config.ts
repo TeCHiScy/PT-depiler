@@ -66,6 +66,10 @@ export const useConfigStore = defineStore("config", {
       if (Array.isArray(state.tableBehavior?.MyData?.columns)) {
         const currentColumns = state.tableBehavior.MyData.columns;
         const filteredColumns = currentColumns.filter((column: string) => !removedSiteTableColumns.includes(column));
+        if (!filteredColumns.includes("messageCount")) {
+          filteredColumns.push("messageCount");
+          needsSave = true;
+        }
         if (filteredColumns.length !== currentColumns.length) {
           state.tableBehavior.MyData.columns = filteredColumns;
           needsSave = true;
@@ -172,6 +176,7 @@ export const useConfigStore = defineStore("config", {
           "hnrUnsatisfied",
           "bonus",
           "seedingBonus",
+          "messageCount",
           "joinTime",
           "updateAt",
           "action",

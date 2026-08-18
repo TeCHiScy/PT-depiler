@@ -85,7 +85,6 @@ const fullTableHeader = reactive([
   { title: t("MyData.table.hnr"), key: "hnrPreWarning", align: "end" },
   { title: t("levelRequirement.bonus"), key: "bonus", align: "end" },
   { title: t("levelRequirement.bonusPerHour"), key: "bonusPerHour", align: "end" },
-  { title: t("MyData.table.messageCount"), key: "messageCount", align: "end" }, // 默认不显示
   { title: t("MyData.table.invites"), key: "invites", align: "end" }, // 默认不显示
   { title: t("MyData.table.joinTime"), key: "joinTime", align: "center" },
   { title: t("MyData.table.lastAccessAt"), key: "lastAccessAt", align: "center" }, // 默认不显示
@@ -163,6 +162,7 @@ const tableFilterHeaders = computed(() => {
       headers.push(item);
     }
   }
+  headers.push({ title: t("MyData.index.filter.unreadMessage"), key: "messageCount", align: "end" });
   return headers;
 });
 const alwaysVisibleTableColumns = computed(() =>
@@ -718,7 +718,9 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <template #item.siteUserConfig.sortIndex="{ item }">
         <div class="d-flex flex-column align-center">
           <v-badge
-            :model-value="(item.messageCount ?? 0) > 0"
+            :model-value="
+              configStore.tableBehavior.MyData.columns?.includes('messageCount') && (item.messageCount ?? 0) > 0
+            "
             :content="(item.messageCount ?? 0) > 10 ? undefined : item.messageCount"
             color="error"
           >
@@ -917,10 +919,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
             <BonusFormatSpan :num="item.seedingBonusPerHour" />
           </v-row>
         </v-container>
-      </template>
-
-      <template #item.messageCount="{ item }">
-        <span class="text-no-wrap">{{ item.messageCount ?? "-" }}</span>
       </template>
 
       <template #item.invites="{ item }">
