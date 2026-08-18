@@ -1,6 +1,6 @@
 import { type ISiteMetadata } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP.ts";
-import { userInfoWithInvitesInUserDetailsPage } from "./kunlun.ts";
+import { userInfoWithInvitesInUserDetailsPage } from "../utils/userInfo";
 
 const linkQuery = {
   selector: ['a[href*="download.php?id="]'],

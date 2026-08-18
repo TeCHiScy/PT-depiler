@@ -10,13 +10,11 @@ import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 
-import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
 import EditSearchEntryList from "./EditSearchEntryList.vue";
 import OneClickImportDialog from "./OneClickImportDialog.vue";
 import RebuildMapDialog from "./RebuildMapDialog.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
-import DeleteDialog from "@/options/components/DeleteDialog.vue";
 import NavButton from "@/options/components/NavButton.vue";
 
 // 数据来源
@@ -28,9 +26,7 @@ const configStore = useConfigStore();
 const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
 
-const showAddDialog = ref<boolean>(false);
 const showEditDialog = ref<boolean>(false);
-const showDeleteDialog = ref<boolean>(false);
 const showOneClickImportDialog = ref<boolean>(false);
 const showRebuildMapDialog = ref<boolean>(false);
 
@@ -94,16 +90,6 @@ function editSite(siteId: TSiteID) {
   showEditDialog.value = true;
 }
 
-const toDeleteIds = ref<TSiteID[]>([]);
-function deleteSite(siteId: TSiteID[]) {
-  toDeleteIds.value = siteId;
-  showDeleteDialog.value = true;
-}
-
-async function confirmDeleteSite(siteId: TSiteID) {
-  return await metadataStore.removeSite(siteId);
-}
-
 const isFaviconFlushing = ref(false);
 async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
   const siteIds = Array.isArray(siteId) ? siteId : [siteId];
@@ -119,18 +105,6 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
   <v-card class="set-site">
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
-
-        <NavButton
-          :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
-          color="error"
-          icon="mdi-minus"
-          @click="deleteSite(tableSelected)"
-        />
-
-        <v-divider class="mx-2" inset vertical />
-
         <NavButton
           color="info"
           icon="mdi-crosshairs-gps"
@@ -335,22 +309,11 @@ async function flushSiteFavicon(siteId: TSiteID | TSiteID[]) {
             size="small"
             @click="() => flushSiteFavicon(item.id)"
           ></v-btn>
-
-          <v-btn
-            :title="t('common.remove')"
-            color="error"
-            icon="mdi-delete"
-            size="small"
-            @click="() => deleteSite([item.id])"
-          >
-          </v-btn>
         </v-btn-group>
       </template>
     </v-data-table>
   </v-card>
 
-  <AddDialog v-model="showAddDialog" />
-  <DeleteDialog v-model="showDeleteDialog" :to-delete-ids="toDeleteIds" :confirm-delete="confirmDeleteSite" />
   <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
   <OneClickImportDialog v-model="showOneClickImportDialog" />
   <RebuildMapDialog v-model="showRebuildMapDialog" />

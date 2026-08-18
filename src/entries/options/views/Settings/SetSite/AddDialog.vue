@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, ref, shallowRef, computed } from "vue";
+import { provide, ref, shallowRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { ISiteMetadata, type ISiteUserConfig, type TSiteID } from "@ptd/site";
 
@@ -29,16 +29,12 @@ function resetDialog() {
   storedSiteUserConfig.value = {};
 }
 
-const showDeadSite = ref<boolean>(false);
-const allUnAddedSites = shallowRef<ISiteMetadata[]>([]);
-const canAddSites = computed(() =>
-  allUnAddedSites.value.filter((site) => (showDeadSite.value && site.isDead) || !site.isDead),
-);
+const canAddSites = shallowRef<ISiteMetadata[]>([]);
 
 async function loadCanAddSites() {
   // Load the sites that can be added
   const sites = await getCanAddedSiteMetadata();
-  allUnAddedSites.value = Object.values(sites);
+  canAddSites.value = Object.values(sites);
 }
 
 async function saveSite() {
@@ -86,9 +82,7 @@ async function saveSite() {
                   <template #prepend>
                     <SiteFavicon :site-id="site.id" class="mr-2" flush-on-no-image />
                   </template>
-                  <v-list-item-title :class="{ 'text-decoration-line-through': site.isDead }">
-                    {{ site.name ?? "" }}
-                  </v-list-item-title>
+                  <v-list-item-title>{{ site.name ?? "" }}</v-list-item-title>
                 </v-list-item>
               </template>
               <template #item="{ props, item: { raw: site } }">
@@ -99,7 +93,7 @@ async function saveSite() {
 
                   <template #title>
                     <v-list-item-title class="mb-1">
-                      <b :class="{ 'text-decoration-line-through': site.isDead }">{{ site.name ?? "" }}</b>
+                      <b>{{ site.name ?? "" }}</b>
                       <!-- 站点类型 -->
                       <v-chip
                         :color="site.type === 'private' ? 'primary' : 'secondary'"
@@ -144,15 +138,6 @@ async function saveSite() {
       </v-card-text>
       <v-divider />
       <v-card-actions>
-        <v-switch
-          v-if="currentStep === 0"
-          v-model="showDeadSite"
-          class="ml-5"
-          color="success"
-          density="compact"
-          hide-details
-          :label="t('SetSite.AddDialog.showDeadSite')"
-        />
         <v-spacer />
         <v-btn color="error" prepend-icon="mdi-close-circle" variant="text" @click="showDialog = false">
           {{ t("common.dialog.cancel") }}

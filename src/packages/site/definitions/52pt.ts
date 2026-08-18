@@ -4,7 +4,7 @@
  */
 import type { ISiteMetadata, IUserInfo } from "../types";
 import { CategoryInclbookmarked, CategoryIncldead, CategorySpstate, SchemaMetadata } from "../schemas/NexusPHP";
-import { userInfoWithInvitesInUserDetailsPage } from "./kunlun";
+import { userInfoWithInvitesInUserDetailsPage } from "../utils/userInfo";
 import NexusPHP from "../schemas/NexusPHP";
 
 export const siteMetadata: ISiteMetadata = {

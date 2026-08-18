@@ -769,9 +769,6 @@
     }
   },
   "SetSite": {
-    "AddDialog": {
-      "showDeadSite": "展示已死亡站点"
-    },
     "Editor": {
       "downloadInterval": "下载间隔",
       "downloadIntervalHint": "影响该站点的下载间隔时间（为了安全考虑，插件不会严格遵守该设置，实际间隔总是会略大于等于设置的间隔）",

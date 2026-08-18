@@ -6,7 +6,7 @@ import {
   SchemaMetadata,
   xiaomloveDefaultUserLevelRequirements,
 } from "../schemas/NexusPHP";
-import { userInfoWithInvitesInUserDetailsPage } from "./kunlun.ts";
+import { userInfoWithInvitesInUserDetailsPage } from "../utils/userInfo";
 
 export const siteMetadata: ISiteMetadata = {
   ...SchemaMetadata,

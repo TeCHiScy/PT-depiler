@@ -21,9 +21,17 @@ import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
 import HistoryDataViewDialog from "./HistoryDataViewDialog.vue";
 import BonusFormatSpan from "./BonusFormatSpan.vue";
 import ExportUserInfoDialog from "./ExportUserInfoDialog.vue";
+import AddDialog from "../../Settings/SetSite/AddDialog.vue";
+import DeleteDialog from "@/options/components/DeleteDialog.vue";
 
 import { formatRatio } from "./utils/format.ts";
-import { tableData, initTableData, cancelFlushSiteLastUserInfo, flushSiteLastUserInfo } from "./utils/lastUserData.ts";
+import {
+  tableData,
+  initTableData,
+  cancelFlushSiteLastUserInfo,
+  flushSiteLastUserInfo,
+  perSiteLastUserData,
+} from "./utils/lastUserData.ts";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -171,6 +179,19 @@ function viewStatistic() {
 }
 
 const showExportDialog = ref(false);
+const showAddDialog = ref(false);
+const showDeleteDialog = ref(false);
+const toDeleteIds = ref<TSiteID[]>([]);
+
+function deleteSite(siteIds: TSiteID[]) {
+  toDeleteIds.value = siteIds;
+  showDeleteDialog.value = true;
+}
+
+async function confirmDeleteSite(siteId: TSiteID) {
+  await metadataStore.removeSite(siteId);
+  delete perSiteLastUserData.value[siteId];
+}
 </script>
 
 <template>
@@ -178,6 +199,16 @@ const showExportDialog = ref(false);
   <v-card>
     <v-card-title>
       <v-row class="ma-0">
+        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
+
+        <NavButton
+          :disabled="tableSelected.length === 0"
+          :text="t('common.remove')"
+          color="error"
+          icon="mdi-minus"
+          @click="deleteSite(tableSelected)"
+        />
+
         <!-- 刷新，取消刷新 -->
         <NavButton
           v-if="runtimeStore.isUserInfoFlush"
@@ -644,6 +675,13 @@ const showExportDialog = ref(false);
             size="small"
             @click="() => flushSiteLastUserInfo([item.site])"
           ></v-btn>
+          <v-btn
+            :title="t('common.remove')"
+            color="error"
+            icon="mdi-delete"
+            size="small"
+            @click="() => deleteSite([item.site])"
+          />
         </v-btn-group>
       </template>
     </v-data-table>
@@ -651,6 +689,8 @@ const showExportDialog = ref(false);
 
   <HistoryDataViewDialog v-model="showHistoryDataViewDialog" :site-id="historyDataViewDialogSiteId!" />
   <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="tableSelected" />
+  <AddDialog v-model="showAddDialog" />
+  <DeleteDialog v-model="showDeleteDialog" :to-delete-ids="toDeleteIds" :confirm-delete="confirmDeleteSite" />
 </template>
 
 <style scoped lang="scss">
