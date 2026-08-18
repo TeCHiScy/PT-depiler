@@ -10,9 +10,7 @@ import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 
 import EditDialog from "./EditDialog.vue";
 import EditSearchEntryList from "./EditSearchEntryList.vue";
-import OneClickImportDialog from "./OneClickImportDialog.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
-import NavButton from "@/options/components/NavButton.vue";
 
 // 数据来源
 import { allAddedSiteInfo, type ISiteTableItem } from "./utils.ts";
@@ -23,7 +21,6 @@ const configStore = useConfigStore();
 const metadataStore = useMetadataStore();
 
 const showEditDialog = ref<boolean>(false);
-const showOneClickImportDialog = ref<boolean>(false);
 
 const tableHeader = computed(() => {
   const baseHeaders = [
@@ -90,13 +87,6 @@ function editSite(siteId: TSiteID) {
   <v-card class="set-site">
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton
-          color="info"
-          icon="mdi-crosshairs-gps"
-          :text="t('SetSite.index.oneClickImport')"
-          @click="() => (showOneClickImportDialog = true)"
-        />
-
         <v-spacer />
         <v-text-field
           v-model="tableWaitFilterRef"
@@ -272,7 +262,6 @@ function editSite(siteId: TSiteID) {
   </v-card>
 
   <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
-  <OneClickImportDialog v-model="showOneClickImportDialog" />
 </template>
 
 <style scoped lang="scss"></style>

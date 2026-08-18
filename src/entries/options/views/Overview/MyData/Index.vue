@@ -1,11 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import { watchDebounced } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { isUndefined } from "es-toolkit/compat";
 import type { DataTableHeader } from "vuetify";
-import { EResultParseStatus, type ISiteUserConfig, type IUserInfo, type TSiteID } from "@ptd/site";
+import {
+  applySiteUserConfigDefaults,
+  definitionList,
+  EResultParseStatus,
+  getDefinedSiteMetadata,
+  type ISiteMetadata,
+  type ISiteUserConfig,
+  type IUserInfo,
+  type TSiteID,
+} from "@ptd/site";
 
 import { useConfigStore } from "@/options/stores/config.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
@@ -13,19 +22,17 @@ import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
 
-import SiteName from "@/options/components/SiteName.vue";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import ResultParseStatus from "@/options/components/ResultParseStatus.vue";
+import EditDialog from "../../Settings/SetSite/EditDialog.vue";
+import EditSearchEntryList from "../../Settings/SetSite/EditSearchEntryList.vue";
 import UserLevelRequirementsTd from "./UserLevelRequirementsTd.vue";
 import HistoryDataViewDialog from "./HistoryDataViewDialog.vue";
 import BonusFormatSpan from "./BonusFormatSpan.vue";
 import ExportUserInfoDialog from "./ExportUserInfoDialog.vue";
-import AddDialog from "../../Settings/SetSite/AddDialog.vue";
-import DeleteDialog from "@/options/components/DeleteDialog.vue";
 
 import { formatRatio } from "./utils/format.ts";
 import {
-  tableData,
   initTableData,
   cancelFlushSiteLastUserInfo,
   flushSiteLastUserInfo,
@@ -42,6 +49,18 @@ const currentDate = new Date();
 
 type TExtendDataTableHeader = DataTableHeader & { props?: any };
 
+type TSiteAvailability = "ready" | "needLogin" | "needToken" | "notDiscovered";
+
+interface ISiteCatalogItem extends Partial<IUserInfo> {
+  site: TSiteID;
+  metadata: ISiteMetadata;
+  siteName: string;
+  siteUserConfig: ISiteUserConfig;
+  availability: TSiteAvailability;
+  isConfigured: boolean;
+  selectable: boolean;
+}
+
 const fullTableHeader = reactive([
   {
     title: t("common.site"),
@@ -49,7 +68,16 @@ const fullTableHeader = reactive([
     align: "center",
     props: { disabled: true },
   },
+  { title: t("MyData.table.siteStatus"), key: "availability", align: "center", sortable: false },
   { title: t("common.username"), key: "name", align: "center" },
+  { title: t("SetSite.common.groups"), key: "siteUserConfig.groups", align: "left", sortable: false },
+  { title: t("SetSite.common.isOffline"), key: "siteUserConfig.isOffline", align: "center" },
+  { title: t("SetSite.common.allowSearch"), key: "siteUserConfig.allowSearch", align: "center" },
+  {
+    title: t("SetSite.common.allowQueryUserInfo"),
+    key: "siteUserConfig.allowQueryUserInfo",
+    align: "center",
+  },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
@@ -80,17 +108,92 @@ const tableNonBooleanControlKey = [
   // Deprecated
   "joinTimeWeekOnly",
 ];
+const tableControlHiddenKeys = ["showPublicSites"];
 
 // 过滤出表格控制中非布尔类型的键
 const filteredTableBooleanControlKeys = computed(() => {
   return Object.keys(configStore.myDataTableControl).filter(
-    (key) => tableNonBooleanControlKey.indexOf(key) === -1,
+    (key) => tableNonBooleanControlKey.indexOf(key) === -1 && !tableControlHiddenKeys.includes(key),
   ) as (keyof typeof configStore.myDataTableControl)[];
 });
 
-interface IUserInfoItem extends IUserInfo {
-  siteUserConfig: ISiteUserConfig;
-  siteName: string;
+const siteCatalogData = ref<ISiteCatalogItem[]>([]);
+const isSiteCatalogLoading = ref(false);
+
+function hasRequiredSiteInput(siteMetadata: ISiteMetadata, siteUserConfig: ISiteUserConfig) {
+  const requiredInputs = (siteMetadata.userInputSettingMeta ?? []).filter((item) => item.required);
+  return requiredInputs.every((item) => Boolean(siteUserConfig.inputSetting?.[item.name]?.trim()));
+}
+
+function getSiteAvailability(
+  siteMetadata: ISiteMetadata,
+  siteUserConfig: ISiteUserConfig | undefined,
+  userInfo: Partial<IUserInfo>,
+  hasAccess: boolean | undefined,
+): TSiteAvailability {
+  const requiresManualInput = (siteMetadata.userInputSettingMeta?.length ?? 0) > 0;
+  if (requiresManualInput && (!siteUserConfig || !hasRequiredSiteInput(siteMetadata, siteUserConfig))) {
+    return "needToken";
+  }
+
+  if (!siteUserConfig) {
+    return "notDiscovered";
+  }
+
+  if (userInfo.status === EResultParseStatus.needLogin) {
+    return "needLogin";
+  }
+
+  if (siteMetadata.type === "private") {
+    // Cookie 只能说明浏览器存在相关站点 Cookie，只有用户信息成功解析才代表站点当前可用。
+    if (hasAccess !== true || userInfo.status !== EResultParseStatus.success) {
+      return "notDiscovered";
+    }
+  }
+
+  return "ready";
+}
+
+async function loadSiteCatalog() {
+  isSiteCatalogLoading.value = true;
+  try {
+    const rows = await Promise.all(
+      (definitionList as TSiteID[]).map(async (siteId) => {
+        try {
+          const metadata = await getDefinedSiteMetadata(siteId);
+          const storedConfig = metadataStore.sites[siteId];
+          const siteUserConfig = storedConfig ?? applySiteUserConfigDefaults(metadata);
+          const userInfo = metadataStore.lastUserInfo[siteId] ?? {};
+          const cachedUserData = perSiteLastUserData.value[siteId] ?? {};
+          const availability = getSiteAvailability(
+            metadata,
+            storedConfig,
+            userInfo,
+            metadataStore.siteDiscovery?.available?.[siteId],
+          );
+
+          return {
+            ...cachedUserData,
+            ...userInfo,
+            site: siteId,
+            metadata,
+            siteName: siteUserConfig.merge?.name ?? metadata.name,
+            siteUserConfig,
+            availability,
+            isConfigured: Boolean(storedConfig),
+            selectable: Boolean(storedConfig) && metadata.type === "private" && !siteUserConfig.isOffline,
+          } as ISiteCatalogItem;
+        } catch (error) {
+          console.warn(`[PT Depiler] Failed to load site catalog entry: ${siteId}`, error);
+          return undefined;
+        }
+      }),
+    );
+
+    siteCatalogData.value = rows.filter((item): item is ISiteCatalogItem => item !== undefined);
+  } finally {
+    isSiteCatalogLoading.value = false;
+  }
 }
 
 const {
@@ -101,12 +204,12 @@ const {
   updateTableFilterValueFn,
   buildFilterDictFn,
   toggleKeywordStateFn,
-} = useTableCustomFilter<IUserInfoItem>({
+} = useTableCustomFilter<ISiteCatalogItem>({
   parseOptions: {
-    keywords: ["site", "status", "siteUserConfig.groups"],
+    keywords: ["site", "status", "availability", "siteUserConfig.groups"],
     ranges: ["updateAt", "messageCount"],
   },
-  titleFields: ["site", "siteName", "name"],
+  titleFields: ["site", "siteName", "metadata.name", "metadata.aka", "metadata.urls"],
   format: {
     status: "number",
   },
@@ -114,8 +217,25 @@ const {
 
 const tableSelected = ref<TSiteID[]>([]); // 选中的站点行
 
-// 挂载时加载表格数据
-onMounted(() => initTableData());
+const visibleSiteCatalogData = computed(() => {
+  // 空搜索时隐藏未发现/未登录/未配置 Token 的站点；有搜索词时展示所有匹配定义。
+  if (tableFilterRef.value.trim()) {
+    return siteCatalogData.value;
+  }
+  return siteCatalogData.value.filter(
+    (item) =>
+      item.availability === "ready" &&
+      (configStore.myDataTableControl.showPublicSites || item.metadata.type !== "public"),
+  );
+});
+
+// 站点目录和用户数据并行初始化；站点发现只在后台执行，不阻塞首屏。
+onMounted(() => {
+  void Promise.all([loadSiteCatalog(), initTableData()]);
+  void metadataStore.discoverSites({ force: true }).then(async () => {
+    await Promise.all([loadSiteCatalog(), initTableData()]);
+  });
+});
 
 // 监听用户信息变化（ offscreen 直接定时刷新的情况 ）
 watchDebounced(
@@ -124,6 +244,7 @@ watchDebounced(
     // 此时前端并没有进行刷新，强制更新
     if (!Object.values(runtimeStore.userInfo.flushPlan).some((isFlushing) => isFlushing)) {
       initTableData();
+      void loadSiteCatalog();
     }
   },
   { debounce: 5e3, deep: true },
@@ -131,9 +252,21 @@ watchDebounced(
 
 const showHistoryDataViewDialog = ref<boolean>(false);
 const historyDataViewDialogSiteId = ref<TSiteID | null>(null);
+const showEditDialog = ref(false);
+const toEditId = ref<TSiteID | null>(null);
+
 function viewHistoryData(siteId: TSiteID) {
   showHistoryDataViewDialog.value = true;
   historyDataViewDialogSiteId.value = siteId;
+}
+
+function editSite(siteId: TSiteID) {
+  toEditId.value = siteId;
+  showEditDialog.value = true;
+}
+
+function getCatalogUserInfo(item: ISiteCatalogItem): IUserInfo | undefined {
+  return typeof item.status === "undefined" ? undefined : (item as IUserInfo);
 }
 
 async function multiOpen() {
@@ -145,10 +278,17 @@ async function multiOpen() {
   }
 }
 
+async function openSite(siteId: TSiteID) {
+  const siteUrl = await metadataStore.getSiteUrl(siteId);
+  if (siteUrl) {
+    window.open(siteUrl, "_blank", "noopener noreferrer");
+  }
+}
+
 async function multiFlush() {
   let flushSiteIds: TSiteID[] = tableSelected.value;
   if (flushSiteIds.length === 0) {
-    flushSiteIds = tableData.value.map((item) => item.site);
+    flushSiteIds = siteCatalogData.value.filter((item) => item.selectable).map((item) => item.site);
     runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedRefreshAll"), { color: "info" });
   }
 
@@ -178,42 +318,18 @@ function viewStatistic() {
 }
 
 const showExportDialog = ref(false);
-const showAddDialog = ref(false);
-const showDeleteDialog = ref(false);
-const toDeleteIds = ref<TSiteID[]>([]);
 
-function deleteSite(siteIds: TSiteID[]) {
-  toDeleteIds.value = siteIds;
-  showDeleteDialog.value = true;
-}
-
-async function confirmDeleteSite(siteId: TSiteID) {
-  await metadataStore.removeSite(siteId);
-  delete perSiteLastUserData.value[siteId];
-}
+watch(showEditDialog, (isOpen, wasOpen) => {
+  if (wasOpen && !isOpen) {
+    void Promise.all([loadSiteCatalog(), initTableData()]);
+  }
+});
 </script>
 
 <template>
   <v-card>
     <v-card-title>
       <v-row class="ma-0">
-        <v-btn
-          :title="t('common.btn.add')"
-          color="success"
-          icon="mdi-plus"
-          variant="text"
-          @click="showAddDialog = true"
-        />
-
-        <v-btn
-          :disabled="tableSelected.length === 0"
-          color="error"
-          icon="mdi-minus"
-          :title="t('common.remove')"
-          variant="text"
-          @click="deleteSite(tableSelected)"
-        />
-
         <!-- 刷新，取消刷新 -->
         <v-btn
           v-if="runtimeStore.isUserInfoFlush"
@@ -240,6 +356,16 @@ async function confirmDeleteSite(siteId: TSiteID) {
           :title="t('MyData.index.multiOpen')"
           variant="text"
           @click="multiOpen"
+        />
+
+        <v-switch
+          v-model="configStore.myDataTableControl.showPublicSites"
+          :label="t('MyData.index.showPublicSites')"
+          class="ml-2"
+          color="success"
+          density="compact"
+          hide-details
+          @update:model-value="() => configStore.$save()"
         />
 
         <v-divider class="mx-2" vertical />
@@ -441,17 +567,18 @@ async function confirmDeleteSite(siteId: TSiteID) {
       :custom-filter="tableFilterFn"
       :filter-keys="['site'] /* 对每个item值只检索一次 */"
       :headers="tableHeader"
-      :items="tableData"
-      :items-per-page="configStore.tableBehavior.MyData.itemsPerPage"
+      :items="visibleSiteCatalogData"
+      :items-per-page="-1"
+      :loading="isSiteCatalogLoading"
       :multi-sort="configStore.enableTableMultiSort"
       :search="tableFilterRef"
       :sort-by="configStore.tableBehavior.MyData.sortBy"
       class="table-stripe table-header-no-wrap table-no-ext-padding"
+      hide-default-footer
       hover
       item-selectable="selectable"
       item-value="site"
       show-select
-      @update:itemsPerPage="(v) => configStore.updateTableBehavior('MyData', 'itemsPerPage', v)"
       @update:sortBy="(v) => configStore.updateTableBehavior('MyData', 'sortBy', v)"
     >
       <!-- 站点信息 -->
@@ -466,13 +593,20 @@ async function confirmDeleteSite(siteId: TSiteID) {
               <SiteFavicon
                 :site-id="item.site"
                 :size="configStore.myDataTableControl.showSiteName ? 18 : 24"
-                @click="() => flushSiteLastUserInfo([item.site])"
+                :title="t('SetSite.common.open')"
+                @click="() => openSite(item.site)"
               />
             </div>
           </v-badge>
 
-          <SiteName v-if="configStore.myDataTableControl.showSiteName" :site-id="item.site" />
+          <span v-if="configStore.myDataTableControl.showSiteName" class="text-no-wrap">{{ item.siteName }}</span>
         </div>
+      </template>
+
+      <template #item.availability="{ item }">
+        <v-chip :color="item.availability === 'ready' ? 'success' : 'warning'" label size="small">
+          {{ t(`MyData.index.siteAvailability.${item.availability}`) }}
+        </v-chip>
       </template>
 
       <!-- 用户名，用户ID -->
@@ -482,9 +616,57 @@ async function confirmDeleteSite(siteId: TSiteID) {
         </span>
       </template>
 
+      <template #item.siteUserConfig.groups="{ item }">
+        <span class="text-no-wrap">{{ (item.siteUserConfig.groups ?? []).join(", ") || "-" }}</span>
+      </template>
+
+      <template #item.siteUserConfig.isOffline="{ item }">
+        <v-switch
+          v-model="item.siteUserConfig.isOffline"
+          :disabled="!item.isConfigured || item.metadata.isDead"
+          class="table-switch-btn"
+          color="success"
+          hide-details
+          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'isOffline', v as boolean)"
+        />
+      </template>
+
+      <template #item.siteUserConfig.allowSearch="{ item }">
+        <v-switch
+          v-model="item.siteUserConfig.allowSearch"
+          :disabled="
+            !item.isConfigured ||
+            item.metadata.isDead ||
+            item.siteUserConfig.isOffline ||
+            !Object.hasOwn(item.metadata, 'search')
+          "
+          class="table-switch-btn"
+          color="success"
+          hide-details
+          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowSearch', v as boolean)"
+        />
+      </template>
+
+      <template #item.siteUserConfig.allowQueryUserInfo="{ item }">
+        <v-switch
+          v-model="item.siteUserConfig.allowQueryUserInfo"
+          :disabled="
+            !item.isConfigured ||
+            item.metadata.isDead ||
+            item.siteUserConfig.isOffline ||
+            !Object.hasOwn(item.metadata, 'userInfo')
+          "
+          class="table-switch-btn"
+          color="success"
+          hide-details
+          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowQueryUserInfo', v as boolean)"
+        />
+      </template>
+
       <!-- 等级信息，升级信息 -->
       <template #item.levelName="{ item }">
-        <UserLevelRequirementsTd :user-info="item" />
+        <UserLevelRequirementsTd v-if="getCatalogUserInfo(item)" :user-info="getCatalogUserInfo(item)!" />
+        <span v-else>-</span>
       </template>
 
       <!-- 上传、下载 -->
@@ -653,7 +835,8 @@ async function confirmDeleteSite(siteId: TSiteID) {
 
       <!-- 更新时间 -->
       <template #item.updateAt="{ item }">
-        <template v-if="item.status === EResultParseStatus.success">
+        <template v-if="typeof item.status === 'undefined'">-</template>
+        <template v-else-if="item.status === EResultParseStatus.success">
           <span class="text-wrap" :title="item.updateAt ? (formatDate(item.updateAt) as string) : '-'">
             {{
               item.updateAt
@@ -675,6 +858,26 @@ async function confirmDeleteSite(siteId: TSiteID) {
       <template #item.action="{ item }">
         <v-btn-group class="table-action" density="compact" variant="plain">
           <v-btn
+            :title="t('common.edit')"
+            color="info"
+            icon="mdi-pencil"
+            size="small"
+            @click="() => editSite(item.site)"
+          />
+          <v-btn
+            :title="t('SetSite.index.table.searchEntries')"
+            :disabled="!item.isConfigured || !item.metadata.searchEntry"
+            size="small"
+          >
+            <v-icon icon="mdi-magnify" />
+            <v-menu :close-on-content-click="false" activator="parent">
+              <EditSearchEntryList
+                :item="{ id: item.site, metadata: item.metadata, userConfig: item.siteUserConfig }"
+              />
+            </v-menu>
+          </v-btn>
+          <v-btn
+            :disabled="!item.isConfigured"
             :title="t('MyData.table.action.viewHistoryData')"
             color="blue"
             icon="mdi-view-list"
@@ -683,7 +886,7 @@ async function confirmDeleteSite(siteId: TSiteID) {
           >
           </v-btn>
           <v-btn
-            :disabled="runtimeStore.userInfo.flushPlan[item.site]"
+            :disabled="!item.selectable || runtimeStore.userInfo.flushPlan[item.site]"
             :loading="runtimeStore.userInfo.flushPlan[item.site]"
             :title="t('MyData.table.action.flushData')"
             color="green"
@@ -691,13 +894,6 @@ async function confirmDeleteSite(siteId: TSiteID) {
             size="small"
             @click="() => flushSiteLastUserInfo([item.site])"
           ></v-btn>
-          <v-btn
-            :title="t('common.remove')"
-            color="error"
-            icon="mdi-delete"
-            size="small"
-            @click="() => deleteSite([item.site])"
-          />
         </v-btn-group>
       </template>
     </v-data-table>
@@ -705,8 +901,7 @@ async function confirmDeleteSite(siteId: TSiteID) {
 
   <HistoryDataViewDialog v-model="showHistoryDataViewDialog" :site-id="historyDataViewDialogSiteId!" />
   <ExportUserInfoDialog v-model="showExportDialog" :selected-site-ids="tableSelected" />
-  <AddDialog v-model="showAddDialog" />
-  <DeleteDialog v-model="showDeleteDialog" :to-delete-ids="toDeleteIds" :confirm-delete="confirmDeleteSite" />
+  <EditDialog v-model="showEditDialog" :site-id="toEditId!" />
 </template>
 
 <style scoped lang="scss">

@@ -8,10 +8,10 @@ import {
   FAVICON_CACHE_TTL_MS,
   getSite as createSiteInstance,
   NO_IMAGE,
+  applySiteUserConfigDefaults,
   type IFaviconCacheEntry,
   type ISiteUserConfig,
   type TSiteID,
-  checkSiteMetadataAllow,
 } from "@ptd/site";
 
 import { onMessage, sendMessage } from "@/messages.ts";
@@ -28,27 +28,7 @@ export async function getSiteUserConfig(siteId: TSiteID, flush = false) {
   const siteMetaData = await getDefinedSiteMetadata(siteId);
 
   if (flush || isEmpty(storedSiteUserConfig)) {
-    const isDeadSite = siteMetaData.isDead ?? false;
-    storedSiteUserConfig.isOffline ??= isDeadSite;
-    storedSiteUserConfig.sortIndex ??= 100;
-    storedSiteUserConfig.allowSearch ??= !isDeadSite && checkSiteMetadataAllow(siteMetaData, "search");
-    storedSiteUserConfig.allowQueryUserInfo ??= !isDeadSite && checkSiteMetadataAllow(siteMetaData, "userInfo");
-    storedSiteUserConfig.timeout ??= 30e3;
-
-    const inputSetting = {} as Record<string, string>;
-    if (siteMetaData.userInputSettingMeta) {
-      for (const userInputMeta of siteMetaData.userInputSettingMeta) {
-        inputSetting[userInputMeta.name] = "";
-      }
-    }
-    storedSiteUserConfig.inputSetting ??= inputSetting;
-
-    storedSiteUserConfig.groups ??= siteMetaData.tags ?? [];
-    storedSiteUserConfig.downloadInterval ??= siteMetaData?.download?.interval ?? 0;
-    storedSiteUserConfig.uploadSpeedLimit ??= 0;
-    storedSiteUserConfig.allowContentScript ??= true;
-    storedSiteUserConfig.downloadLinkAppendix ??= "";
-    storedSiteUserConfig.merge ??= {};
+    applySiteUserConfigDefaults(siteMetaData, storedSiteUserConfig);
   }
 
   logger({ msg: `getSiteUserConfig for ${siteId}`, data: storedSiteUserConfig });

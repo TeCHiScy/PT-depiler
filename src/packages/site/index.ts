@@ -69,6 +69,36 @@ export function checkSiteMetadataAllow(siteMetadata: ISiteMetadata, key: keyof I
   return !!siteMetadata[key];
 }
 
+export function applySiteUserConfigDefaults(
+  siteMetadata: ISiteMetadata,
+  userConfig: ISiteUserConfig = {},
+): ISiteUserConfig {
+  const isDeadSite = siteMetadata.isDead ?? false;
+
+  userConfig.isOffline ??= isDeadSite;
+  userConfig.sortIndex ??= 100;
+  userConfig.allowSearch ??= !isDeadSite && checkSiteMetadataAllow(siteMetadata, "search");
+  userConfig.allowQueryUserInfo ??= !isDeadSite && checkSiteMetadataAllow(siteMetadata, "userInfo");
+  userConfig.timeout ??= 30e3;
+
+  const inputSetting = {} as Record<string, string>;
+  if (siteMetadata.userInputSettingMeta) {
+    for (const userInputMeta of siteMetadata.userInputSettingMeta) {
+      inputSetting[userInputMeta.name] = "";
+    }
+  }
+  userConfig.inputSetting ??= inputSetting;
+
+  userConfig.groups ??= siteMetadata.tags ?? [];
+  userConfig.downloadInterval ??= siteMetadata.download?.interval ?? 0;
+  userConfig.uploadSpeedLimit ??= 0;
+  userConfig.allowContentScript ??= true;
+  userConfig.downloadLinkAppendix ??= "";
+  userConfig.merge ??= {};
+
+  return userConfig;
+}
+
 export async function getSite<TYPE extends "private" | "public">(
   siteId: TSiteID,
   userConfig: ISiteUserConfig = {},

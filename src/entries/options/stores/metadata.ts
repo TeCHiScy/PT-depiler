@@ -2,7 +2,10 @@ import { nanoid } from "nanoid";
 import { defineStore } from "pinia";
 import { isEmpty, set } from "es-toolkit/compat";
 import {
+  definitionList,
+  applySiteUserConfigDefaults,
   getDefinedSiteMetadata,
+  getHostFromUrl,
   type ISearchCategories,
   type ISearchEntryRequestConfig,
   type ISiteMetadata,
@@ -15,6 +18,7 @@ import {
   IDownloaderMetadata,
   IMediaServerMetadata,
   IMetadataPiniaStorageSchema,
+  ISiteDiscoveryMetadata,
   ISearchSolution,
   TDownloaderKey,
   TMediaServerKey,
@@ -32,10 +36,49 @@ type TSimplePatchFieldKey = keyof Pick<
   "sites" | "solutions" | "snapshots" | "downloaders" | "mediaServers" | "backupServers"
 >;
 
+interface ISiteDiscoveryResult {
+  added: number;
+  failed: number;
+}
+
+interface ISiteDiscoveryOptions {
+  force?: boolean;
+}
+
+let siteDiscoveryPromise: Promise<ISiteDiscoveryResult> | undefined;
+
+function getSiteDiscoveryVersion() {
+  return `local-cookie-v3:${__EXT_VERSION__}:${definitionList.join(",")}`;
+}
+
+function hasSiteCookie(siteMetadata: ISiteMetadata, cookies: chrome.cookies.Cookie[]) {
+  const siteHosts = (siteMetadata.urls ?? []).flatMap((url) => {
+    try {
+      return [new URL(url).hostname.toLowerCase()];
+    } catch {
+      return [getHostFromUrl(url).toLowerCase().replace(/:\d+$/, "")];
+    }
+  });
+
+  return cookies.some((cookie) => {
+    const cookieHost = cookie.domain.replace(/^\./, "").toLowerCase();
+    return siteHosts.some(
+      (siteHost) =>
+        siteHost === cookieHost || siteHost.endsWith(`.${cookieHost}`) || cookieHost.endsWith(`.${siteHost}`),
+    );
+  });
+}
+
 export const useMetadataStore = defineStore("metadata", {
   persistWebExt: true,
   state: (): IMetadataPiniaStorageSchema => ({
     sites: {},
+    siteDiscovery: {
+      version: "",
+      discovered: {},
+      available: {},
+      ignored: {},
+    },
     solutions: {},
     snapshots: {},
     downloaders: {},
@@ -362,6 +405,9 @@ export const useMetadataStore = defineStore("metadata", {
 
       delete siteConfig.valid;
       this.sites[siteId] = siteConfig;
+      if (this.siteDiscovery?.ignored) {
+        delete this.siteDiscovery.ignored[siteId];
+      }
 
       if (rebuildMaps) {
         await this.buildSiteMapCache(false);
@@ -370,10 +416,130 @@ export const useMetadataStore = defineStore("metadata", {
       await this.$save();
     },
 
+    async addSites(siteConfigs: Record<TSiteID, ISiteUserConfig>, options?: { rebuildMaps?: boolean; save?: boolean }) {
+      const { rebuildMaps = true, save = true } = options ?? {};
+
+      for (const [siteId, siteConfig] of Object.entries(siteConfigs)) {
+        delete siteConfig.valid;
+        this.sites[siteId] = siteConfig;
+      }
+
+      if (rebuildMaps) {
+        await this.buildSiteMapCache(false);
+      }
+
+      if (save) {
+        await this.$save();
+      }
+    },
+
+    async discoverSites(options: ISiteDiscoveryOptions = {}): Promise<ISiteDiscoveryResult> {
+      if (siteDiscoveryPromise) {
+        return await siteDiscoveryPromise;
+      }
+
+      const { force = false } = options;
+
+      siteDiscoveryPromise = (async () => {
+        const discoveryVersion = getSiteDiscoveryVersion();
+        const discovery = this.siteDiscovery ?? ({} as ISiteDiscoveryMetadata);
+        const ignored = discovery.ignored ?? {};
+        const discovered = discovery.discovered ?? {};
+        const available = discovery.available ?? {};
+
+        if (!force && discovery.version === discoveryVersion) {
+          return { added: 0, failed: 0 };
+        }
+
+        const siteIdsToScan = (definitionList as TSiteID[]).filter((siteId) => !ignored[siteId] || this.sites[siteId]);
+        const discoveredSiteIds: TSiteID[] = [];
+        let failed = 0;
+
+        // 站点定义和默认配置均为本地数据，并行加载，避免首屏被数百个串行任务阻塞。
+        const discoveryResults = await Promise.all(
+          siteIdsToScan.map(async (siteId) => {
+            try {
+              const siteMetadata = await getDefinedSiteMetadata(siteId);
+              const requiresManualInput = (siteMetadata.userInputSettingMeta?.length ?? 0) > 0;
+
+              if (siteMetadata.isDead || requiresManualInput) {
+                return undefined;
+              }
+
+              return { siteId, siteMetadata };
+            } catch (error) {
+              failed++;
+              console.warn(`[PT Depiler] Failed to discover local site definition: ${siteId}`, error);
+              return undefined;
+            }
+          }),
+        );
+        const discoverableSites = discoveryResults.filter(
+          (site): site is { siteId: TSiteID; siteMetadata: ISiteMetadata } => site !== undefined,
+        );
+
+        const privateSites = discoverableSites.filter(({ siteMetadata }) => siteMetadata.type === "private");
+        let cookies: chrome.cookies.Cookie[] = [];
+        if (privateSites.length > 0) {
+          try {
+            // 只读取浏览器本地 Cookie，不访问站点网络；Cookie 值不会写入日志或配置。
+            cookies = await sendMessage("getAllCookies", {});
+          } catch (error) {
+            failed++;
+            console.warn("[PT Depiler] Failed to read browser cookies for local site discovery", error);
+          }
+        }
+
+        const siteConfigs: Record<TSiteID, ISiteUserConfig> = {};
+        for (const { siteId, siteMetadata } of discoverableSites) {
+          const hasAccess = siteMetadata.type === "public" || hasSiteCookie(siteMetadata, cookies);
+          available[siteId] = hasAccess;
+
+          if (!hasAccess) {
+            continue;
+          }
+
+          if (!this.sites[siteId] && !ignored[siteId]) {
+            siteConfigs[siteId] = applySiteUserConfigDefaults(siteMetadata);
+            discoveredSiteIds.push(siteId);
+          }
+        }
+
+        if (Object.keys(siteConfigs).length > 0) {
+          await this.addSites(siteConfigs, { rebuildMaps: false, save: false });
+          for (const siteId of discoveredSiteIds) {
+            discovered[siteId] = true;
+          }
+          await this.buildSiteMapCache(false);
+        }
+
+        this.siteDiscovery = {
+          version: failed === 0 ? discoveryVersion : "",
+          discovered,
+          available,
+          ignored,
+        };
+
+        await this.$save();
+        return { added: Object.keys(siteConfigs).length, failed };
+      })();
+
+      try {
+        return await siteDiscoveryPromise;
+      } finally {
+        siteDiscoveryPromise = undefined;
+      }
+    },
+
     async removeSite(siteId: TSiteID, options?: { rebuildMaps?: boolean }) {
       const { rebuildMaps = true } = options ?? {};
 
       delete this.sites[siteId];
+
+      if (this.siteDiscovery?.discovered?.[siteId]) {
+        this.siteDiscovery.ignored ??= {};
+        this.siteDiscovery.ignored[siteId] = true;
+      }
 
       if (rebuildMaps) {
         await this.buildSiteMapCache(false);

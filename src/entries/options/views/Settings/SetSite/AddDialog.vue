@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { ISiteMetadata, type ISiteUserConfig, type TSiteID } from "@ptd/site";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
-import { getCanAddedSiteMetadata } from "./utils.ts";
+import { getManualAddableSiteMetadata } from "./utils.ts";
 
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import Editor from "./Editor.vue";
@@ -33,7 +33,7 @@ const canAddSites = shallowRef<ISiteMetadata[]>([]);
 
 async function loadCanAddSites() {
   // Load the sites that can be added
-  const sites = await getCanAddedSiteMetadata();
+  const sites = await getManualAddableSiteMetadata();
   canAddSites.value = Object.values(sites);
 }
 
@@ -68,6 +68,7 @@ async function saveSite() {
             <v-autocomplete
               v-model="selectedSiteId"
               :filter-keys="['raw.name', 'raw.urls', 'raw.aka']"
+              :hint="t('SetSite.add.manualOnlyHint')"
               :items="canAddSites"
               :messages="canAddSites.find((i) => i.id === selectedSiteId)?.description ?? ''"
               :multiple="false"

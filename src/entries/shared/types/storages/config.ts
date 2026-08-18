@@ -59,6 +59,8 @@ export interface IConfigPiniaStorageSchema {
 
   // 对 MyData 页面 v-data-table 展示的额外控制项
   myDataTableControl: {
+    // 是否在站点页默认展示公开站点（搜索时始终可以搜索到公开站点）
+    showPublicSites: boolean;
     // 是否展示站点名称
     showSiteName: boolean;
     // 是否展示未读信息情况

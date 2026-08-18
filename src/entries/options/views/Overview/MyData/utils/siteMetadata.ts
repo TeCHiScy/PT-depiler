@@ -13,34 +13,45 @@ export interface IExtendSiteMetadata extends Pick<ISiteMetadata, "id" | "type"> 
   isOffline: boolean; // 是否为离线站点
   faviconSrc: string;
   faviconElement: HTMLImageElement; // 站点的图片
+  faviconLoaded: boolean;
 }
 
 export type TOptionSiteMetadatas = Record<TSiteID, IExtendSiteMetadata>;
 
 export const allAddedSiteMetadata = shallowReactive<TOptionSiteMetadatas>({});
 
-export async function loadAllAddedSiteMetadata(sites?: string[]): Promise<TOptionSiteMetadatas> {
+export async function loadAllAddedSiteMetadata(
+  sites?: string[],
+  options: { loadFavicons?: boolean } = {},
+): Promise<TOptionSiteMetadatas> {
   const loadSites = sites ?? definitionList;
   const metadataStore = useMetadataStore();
+  const loadFavicons = options.loadFavicons ?? true;
 
   await Promise.allSettled(
     loadSites.map((siteId) => {
       return new Promise<void>(async (resolve) => {
-        if (!allAddedSiteMetadata[siteId]) {
+        const existingMetadata = allAddedSiteMetadata[siteId];
+        if (!existingMetadata || (loadFavicons && !existingMetadata.faviconLoaded)) {
           const siteMetadata = await metadataStore.getSiteMetadata(siteId);
-          const siteFaviconUrl = await sendMessage("getSiteFavicon", { site: siteId });
+          const siteFaviconUrl = loadFavicons
+            ? await sendMessage("getSiteFavicon", { site: siteId })
+            : (existingMetadata?.faviconSrc ?? NO_IMAGE);
 
           const siteName = await metadataStore.getSiteName(siteId);
 
           // 加载站点图标
-          const siteFavicon = new Image();
-          siteFavicon.src = siteFaviconUrl;
-          siteFavicon.decode().catch(() => {
-            siteFavicon.src = NO_IMAGE;
-            siteFavicon.decode();
-          });
+          const siteFavicon = existingMetadata?.faviconElement ?? new Image();
+          if (loadFavicons) {
+            siteFavicon.src = siteFaviconUrl;
+            siteFavicon.decode().catch(() => {
+              siteFavicon.src = NO_IMAGE;
+              siteFavicon.decode();
+            });
+          }
 
           (allAddedSiteMetadata as TOptionSiteMetadatas)[siteId] = {
+            ...existingMetadata,
             id: siteId,
             type: siteMetadata.type,
             siteName,
@@ -52,6 +63,7 @@ export async function loadAllAddedSiteMetadata(sites?: string[]): Promise<TOptio
             isOffline: metadataStore.sites[siteId]?.isOffline ?? false,
             faviconSrc: siteFaviconUrl,
             faviconElement: siteFavicon,
+            faviconLoaded: loadFavicons || existingMetadata?.faviconLoaded === true,
           };
         }
 

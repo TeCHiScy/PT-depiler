@@ -111,12 +111,6 @@ export const routes: RouteRecordRaw[] = [
         children: setBaseChildren,
       },
       {
-        path: "/set-site",
-        name: "SetSite",
-        meta: { icon: "mdi-earth" },
-        component: () => import("../views/Settings/SetSite/Index.vue"),
-      },
-      {
         path: "/set-search-solution",
         name: "SetSearchSolution",
         meta: { icon: "mdi-widgets" },
@@ -141,6 +135,12 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("../views/Settings/SetBackup/Index.vue"),
       },
     ],
+  },
+  {
+    path: "/set-site",
+    name: "LegacySetSite",
+    redirect: "/my-data",
+    meta: { isMainMenu: false },
   },
   {
     path: "/about",

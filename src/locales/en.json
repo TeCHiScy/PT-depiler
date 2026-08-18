@@ -239,6 +239,12 @@
       },
       "flushCancel": "Refresh canceled",
       "flushSelectSite": "Refresh selected",
+      "siteAvailability": {
+        "needLogin": "Login required",
+        "needToken": "Token required",
+        "notDiscovered": "Not discovered",
+        "ready": "Available"
+      },
       "joinTimeFormat": "Display join time",
       "joinTimeFormatOptions": {
         "added": "Absolute Date",
@@ -257,6 +263,7 @@
       "showLevelRequirement": "Show Level Requirement",
       "showNextLevelInDialog": "Show next level requirements in Level Requirement Dialog",
       "showNextLevelInTable": "Show next level requirements in Table",
+      "showPublicSites": "Show public sites",
       "showSeedingBonus": "Show Seeding Bonus",
       "showSiteName": "Show Site Name",
       "showUnreadMessage": "Show Unread Messages",
@@ -278,6 +285,7 @@
       "lastAccessAt": "Last Access At",
       "lastAccessDurationNote": "Not Access for {0} days",
       "levelName": "Level",
+      "siteStatus": "Site Status",
       "trueUserData": "True Data",
       "updateAt": "Updated At",
       "userData": "Data"
@@ -789,6 +797,7 @@
       "siteDefault": "Site Default"
     },
     "add": {
+      "manualOnlyHint": "Only sites requiring manual input such as a token are shown here; other sites are discovered automatically.",
       "selectSitePlaceholder": "Please Select a site to add (support search in url and site name)",
       "title": "Add Site"
     },
@@ -822,7 +831,8 @@
       "uploadSpeedLimitHint": "Set upload speed limit (MiB/s) when pushing torrents to downloader, 0 or empty means unlimited"
     },
     "index": {
-      "oneClickImport": "One-Click Import Sites",
+      "discoverSites": "Discover Sites",
+      "siteDiscoveryComplete": "Automatically discovered and added {count} sites",
       "settingNote": [
         "Only the configured site will display the plugin icon and the corresponding function;",
         "the offline site will no longer participate in the search and information acquisition;"
@@ -830,21 +840,6 @@
       "table": {
         "searchEntries": "Search Entries"
       }
-    },
-    "oneClickImportDialog": {
-      "alert1": "This operation will attempt to import the sites you select with default configurations. Please ensure you have logged into these sites in your browser. The import process cannot be interrupted, please wait patiently.",
-      "alert2": "List of unadded sites",
-      "importComplete": "One-click import complete, successfully added {count} sites",
-      "stats": "Selected {count} sites, added {success} sites, failed to add {failed} sites.",
-      "status": {
-        "failed": "Failed to add",
-        "manual": "This site needs to be added manually",
-        "selected": "Selected",
-        "success": "Added successfully",
-        "trying": "Trying"
-      },
-      "title": "One-Click Import Sites",
-      "trying": "Trying to import site [{name}] ..."
     }
   },
   "UserDataStatistic": {
@@ -1148,7 +1143,7 @@
       "MediaServerEntity": "Media Library",
       "MyClient": "My BtClient",
       "MyCollection": "Collection",
-      "MyData": "My Data",
+      "MyData": "Sites",
       "SearchEntity": "Search Results",
       "SearchResultSnapshot": "Search Snapshot",
       "default": "Overview"

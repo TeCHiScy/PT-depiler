@@ -14,6 +14,14 @@ const deprecatedConfigKeys = [
   "myDataTableControl.joinTimeWeekOnly", // 已废弃，使用 joinTimeFormat 替代
 ];
 
+const unifiedSiteTableColumns = [
+  "availability",
+  "siteUserConfig.groups",
+  "siteUserConfig.isOffline",
+  "siteUserConfig.allowSearch",
+  "siteUserConfig.allowQueryUserInfo",
+];
+
 export const defaultTimelineBackgroundColor = "#455A64";
 
 export const useConfigStore = defineStore("config", {
@@ -46,6 +54,15 @@ export const useConfigStore = defineStore("config", {
             // 否则保留其他有效的排序项
             state.tableBehavior.DownloadHistory.sortBy = filteredSortBy;
           }
+          needsSave = true;
+        }
+      }
+
+      if (Array.isArray(state.tableBehavior?.MyData?.columns)) {
+        const currentColumns = state.tableBehavior.MyData.columns;
+        const missingColumns = unifiedSiteTableColumns.filter((column) => !currentColumns.includes(column));
+        if (missingColumns.length > 0) {
+          state.tableBehavior.MyData.columns = [...currentColumns, ...missingColumns];
           needsSave = true;
         }
       }
@@ -96,7 +113,12 @@ export const useConfigStore = defineStore("config", {
         itemsPerPage: 20,
         columns: [
           "siteUserConfig.sortIndex",
+          "availability",
           "name",
+          "siteUserConfig.groups",
+          "siteUserConfig.isOffline",
+          "siteUserConfig.allowSearch",
+          "siteUserConfig.allowQueryUserInfo",
           "levelName",
           "uploaded",
           "ratio",
@@ -166,6 +188,7 @@ export const useConfigStore = defineStore("config", {
     userName: "",
 
     myDataTableControl: {
+      showPublicSites: false,
       showSiteName: true,
       showUnreadMessage: true,
       showUserName: true,

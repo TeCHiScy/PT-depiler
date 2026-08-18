@@ -24,7 +24,7 @@ async function updatePerSiteData(siteId: TSiteID, siteUserInfoData: IUserInfo) {
   const currentDate = new Date();
 
   // 再单独加载一遍该站点的配置信息，以免缺失
-  const allAddedSiteMetadata = await loadAllAddedSiteMetadata([siteId]);
+  const allAddedSiteMetadata = await loadAllAddedSiteMetadata([siteId], { loadFavicons: false });
   const siteMeta = allAddedSiteMetadata[siteId];
 
   perSiteLastUserData.value[siteId] = {
@@ -47,7 +47,7 @@ export async function initTableData() {
   const configStore = useConfigStore();
 
   // 预加载所有已配置的站点基本属性，同时预加载的变量在全局统一，这样可以加快 Timeline 和 Statistic 的加载速度
-  const addedSiteMetaData = await loadAllAddedSiteMetadata(Object.keys(metadataStore.sites));
+  const addedSiteMetaData = await loadAllAddedSiteMetadata(Object.keys(metadataStore.sites), { loadFavicons: false });
 
   const tasks: Promise<void>[] = [];
 

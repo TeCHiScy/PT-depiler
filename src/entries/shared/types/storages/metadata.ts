@@ -94,9 +94,26 @@ export interface IBackupServerMetadata extends IBackupConfig {
   backupInterval?: number; // 自动备份间隔（小时），不设置或为 0 表示不自动备份
 }
 
+export interface ISiteDiscoveryMetadata {
+  // 当前扩展版本已经完成本地站点定义扫描
+  version?: string;
+
+  // 自动发现并添加过的站点，用于区分用户手动添加的站点
+  discovered?: Record<TSiteKey, true>;
+
+  // 最近一次本地 Cookie 扫描得到的站点可用状态；不保存 Cookie 内容
+  available?: Record<TSiteKey, boolean>;
+
+  // 用户删除过的自动发现站点，避免每次打开“站点”页时被重新添加
+  ignored?: Record<TSiteKey, true>;
+}
+
 export interface IMetadataPiniaStorageSchema {
   // 站点配置(用户配置)
   sites: Record<TSiteKey, ISiteUserConfig>;
+
+  // 本地站点发现状态，不涉及站点网络访问
+  siteDiscovery?: ISiteDiscoveryMetadata;
 
   // 搜索方案配置
   solutions: Record<TSolutionKey, ISearchSolutionMetadata>;

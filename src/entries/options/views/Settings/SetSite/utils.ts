@@ -3,13 +3,14 @@ import { definitionList, ISiteMetadata, type ISiteUserConfig, TSiteID } from "@p
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 
-export async function getCanAddedSiteMetadata() {
+export async function getManualAddableSiteMetadata() {
   const canAddedSiteMetadata: Record<TSiteID, ISiteMetadata> = {};
   const metadataStore = useMetadataStore();
   const canAddedSiteList = definitionList.filter((x) => !metadataStore.getAddedSiteIds.includes(x));
   for (const siteId of canAddedSiteList) {
     const siteMetadata = await metadataStore.getSiteMetadata(siteId);
-    if (!siteMetadata.isDead) {
+    const requiresManualInput = (siteMetadata.userInputSettingMeta?.length ?? 0) > 0;
+    if (!siteMetadata.isDead && requiresManualInput) {
       canAddedSiteMetadata[siteId] = siteMetadata;
     }
   }
