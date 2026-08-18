@@ -10,7 +10,6 @@ import type { TDownloaderKey, TMediaServerKey } from "@/shared/types.ts";
 
 import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
-import NavButton from "@/options/components/NavButton.vue";
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
 
 const { t } = useI18n();
@@ -51,12 +50,19 @@ async function confirmDeleteMediaServer(mediaServerId: TMediaServerKey) {
   <v-card class="set-media-server">
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
-        <NavButton
+        <v-btn
+          :title="t('common.btn.add')"
+          color="success"
+          icon="mdi-plus"
+          variant="text"
+          @click="showAddDialog = true"
+        />
+        <v-btn
           :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
+          :title="t('common.remove')"
           color="error"
-          icon="mdi-minus"
+          icon="mdi-delete"
+          variant="text"
           @click="deleteMediaServer(tableSelected)"
         />
       </v-row>
@@ -66,7 +72,9 @@ async function confirmDeleteMediaServer(mediaServerId: TMediaServerKey) {
       v-model="tableSelected"
       :headers="fullTableHeader"
       :items="metadataStore.getMediaServers"
+      :items-per-page="-1"
       class="table-stripe table-header-no-wrap"
+      hide-default-footer
       hover
       item-value="id"
       :multi-sort="configStore.enableTableMultiSort"

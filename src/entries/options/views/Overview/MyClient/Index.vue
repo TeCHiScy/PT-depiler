@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 import type { DataTableHeader } from "vuetify";
 
 import { CTorrentState, type CTorrent, getDownloaderIcon } from "@ptd/downloader";
@@ -14,10 +15,13 @@ import DeleteDialog from "./DeleteDialog.vue";
 import PushToDownloaderDialog from "./PushToDownloaderDialog.vue";
 import TorrentStateTd from "./TorrentStateTd.vue";
 import ClientStatusDialog from "./ClientStatusDialog.vue";
+import DownloaderSettings from "../../Settings/SetDownloader/Index.vue";
 
 import { torrents, autoRefreshRunning, globalRefreshInterval, useClientRefresh } from "./utils.ts";
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
 const configStore = useConfigStore();
@@ -55,6 +59,7 @@ function openRawDialog(item: CTorrent) {
 
 // client status dialog
 const showClientStatusDialog = ref(false);
+const showDownloaderSettingsDialog = ref(false);
 
 const totalUpSpeed = computed(() => allTorrents.value.reduce((acc, t) => acc + (t.uploadSpeed ?? 0), 0));
 const totalDlSpeed = computed(() => allTorrents.value.reduce((acc, t) => acc + (t.downloadSpeed ?? 0), 0));
@@ -117,6 +122,9 @@ async function loadTorrents() {
   tableSelected.value = [];
   resetRefreshState();
   try {
+    // Pinia 的持久化状态是异步恢复的。直接进入页面时，下载器列表可能尚未恢复，
+    // 此时点击刷新不能得到任何 activeDownloaderIds；等待恢复后再计算刷新范围。
+    await metadataStore.$onReady();
     await Promise.allSettled(activeDownloaderIds.value.map((id) => loadSingleDownloader(id)));
   } finally {
     loading.value = false;
@@ -128,11 +136,26 @@ async function loadTorrents() {
   }
 }
 
-onMounted(() => {
+function openDownloaderSettings() {
+  showDownloaderSettingsDialog.value = true;
+}
+
+function openLegacyDownloaderSettings() {
+  if (route.query.openDownloaderSettings === "1") {
+    showDownloaderSettingsDialog.value = true;
+    void router.replace({ name: "MyClient" });
+  }
+}
+
+onMounted(async () => {
+  openLegacyDownloaderSettings();
+  await Promise.all([configStore.$onReady(), metadataStore.$onReady()]);
   if (configStore.download.initDownloaderTorrentOnEnter) {
-    loadTorrents();
+    await loadTorrents();
   }
 });
+
+watch(() => route.query.openDownloaderSettings, openLegacyDownloaderSettings);
 
 onUnmounted(() => {
   stopAllTimers();
@@ -220,6 +243,14 @@ function torrentKey(torrent: CTorrent) {
           icon="mdi-cloud-upload"
           variant="text"
           @click="showPushToDownloaderDialog = true"
+        />
+
+        <v-btn
+          :title="t('MyClient.settings')"
+          color="indigo"
+          icon="mdi-cog"
+          variant="text"
+          @click="openDownloaderSettings"
         />
 
         <v-divider vertical class="mx-2" />
@@ -487,6 +518,22 @@ function torrentKey(torrent: CTorrent) {
   <PushToDownloaderDialog v-model="showPushToDownloaderDialog" />
 
   <ClientStatusDialog v-model="showClientStatusDialog" />
+
+  <v-dialog v-model="showDownloaderSettingsDialog" fullscreen scrollable>
+    <v-card>
+      <v-card-title class="pa-0">
+        <v-toolbar color="blue-grey-darken-2">
+          <v-toolbar-title>{{ t("route.Settings.SetDownloader") }}</v-toolbar-title>
+          <template #append>
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showDownloaderSettingsDialog = false" />
+          </template>
+        </v-toolbar>
+      </v-card-title>
+      <v-card-text class="pa-2">
+        <DownloaderSettings />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 
   <!-- Raw JSON dialog -->
   <v-dialog v-model="showRawDialog" max-width="800" scrollable>

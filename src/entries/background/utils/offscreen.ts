@@ -1,6 +1,31 @@
+import { sendMessage } from "@/messages.ts";
+
 let creating: Promise<void> | null; // A global promise to avoid concurrency issues
 
 const offscreenPath = "src/entries/offscreen/offscreen.html";
+const offscreenReadyTimeout = 5000;
+const offscreenReadyRetryDelay = 100;
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForOffscreenReady() {
+  const deadline = Date.now() + offscreenReadyTimeout;
+  let lastError: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      if (await sendMessage("offscreenReady", undefined)) return;
+    } catch (error) {
+      lastError = error;
+    }
+
+    await sleep(offscreenReadyRetryDelay);
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Timed out waiting for offscreen document readiness");
+}
 
 export async function setupOffscreenDocument() {
   // Firefox 环境下不构建 offscreen
@@ -29,9 +54,16 @@ export async function setupOffscreenDocument() {
       reasons: [chrome.offscreen.Reason.DOM_PARSER],
       justification: "Allow DOM_PARSER, CLIPBOARD, BLOBS in background.",
     });
-    await creating;
-    creating = null;
+    try {
+      await creating;
+    } finally {
+      creating = null;
+    }
   }
+
+  // createDocument resolves before the offscreen module necessarily registers
+  // its message handlers. Wait for an explicit response before serving work.
+  await waitForOffscreenReady();
 }
 
 // noinspection JSIgnoredPromiseFromCall

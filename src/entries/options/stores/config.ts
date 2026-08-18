@@ -12,6 +12,7 @@ import { useMetadataStore } from "./metadata.ts";
 const deprecatedConfigKeys = [
   "myDataTableControl.tableFontSize", // v0.0.4.961 废弃
   "myDataTableControl.joinTimeWeekOnly", // 已废弃，使用 joinTimeFormat 替代
+  "myDataTableControl.showUserName", // 用户名遮罩开关已移除，直接由表格列控制是否展示
 ];
 
 const removedSiteTableColumns = ["siteUserConfig.allowSearch", "siteUserConfig.allowQueryUserInfo"];
@@ -183,7 +184,6 @@ export const useConfigStore = defineStore("config", {
       showPublicSites: false,
       showSiteName: true,
       showUnreadMessage: true,
-      showUserName: true,
       normalizeLevelName: true,
       showLevelRequirement: true,
       onlyShowUserLevelRequirement: true,

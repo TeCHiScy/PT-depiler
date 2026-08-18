@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { isEmpty } from "es-toolkit/compat";
 import { getMediaServerIcon, type IMediaServerItem } from "@ptd/mediaServer";
 
@@ -11,11 +11,13 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import { formatSize } from "@/options/utils.ts";
 
 import ItemInformationDialog from "./ItemInformationDialog.vue";
+import MediaServerSettings from "../../Settings/SetMediaServer/Index.vue";
 
 import { doSearch, searchMediaServerIds } from "./utils.ts";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const configStore = useConfigStore();
 const runtimeStore = useRuntimeStore();
 const metadataStore = useMetadataStore();
@@ -24,6 +26,7 @@ const search = ref<string>((route.query.search as string) || "");
 
 const showItem = ref<IMediaServerItem | null>(null);
 const showItemInformationDialog = ref<boolean>(false);
+const showMediaServerSettingsDialog = ref<boolean>(false);
 
 const hasMore = computed<boolean>(() =>
   isEmpty(runtimeStore.mediaServerSearch.searchStatus)
@@ -34,6 +37,13 @@ const hasMore = computed<boolean>(() =>
 function showItemInformation(item: IMediaServerItem) {
   showItem.value = item;
   showItemInformationDialog.value = true;
+}
+
+function openLegacyMediaServerSettings() {
+  if (route.query.openMediaServerSettings === "1") {
+    showMediaServerSettingsDialog.value = true;
+    void router.replace({ name: "MediaServerEntity", query: route.query.search ? { search: route.query.search } : {} });
+  }
 }
 
 function onScroll() {
@@ -49,17 +59,28 @@ function onScroll() {
 }
 
 onMounted(async () => {
+  openLegacyMediaServerSettings();
   if (configStore.mediaServerEntity.autoSearchWhenMount && runtimeStore.mediaServerSearch.searchResult.length === 0) {
     // noinspection ES6MissingAwait
     doSearch({ searchKey: search.value });
   }
 });
+
+watch(() => route.query.openMediaServerSettings, openLegacyMediaServerSettings);
 </script>
 
 <template>
   <v-card v-scroll="onScroll">
     <v-card-title>
       <v-row class="ma-0">
+        <v-btn
+          :title="t('MediaServerEntity.settings')"
+          color="indigo"
+          icon="mdi-cog"
+          variant="text"
+          @click="showMediaServerSettingsDialog = true"
+        />
+
         <v-spacer />
         <v-text-field
           v-model="search"
@@ -234,6 +255,22 @@ onMounted(async () => {
   </v-card>
 
   <ItemInformationDialog v-model="showItemInformationDialog" :item="showItem as IMediaServerItem" />
+
+  <v-dialog v-model="showMediaServerSettingsDialog" fullscreen scrollable>
+    <v-card>
+      <v-card-title class="pa-0">
+        <v-toolbar color="blue-grey-darken-2">
+          <v-toolbar-title>{{ t("route.Settings.SetMediaServer") }}</v-toolbar-title>
+          <template #append>
+            <v-btn icon="mdi-close" :title="t('common.dialog.close')" @click="showMediaServerSettingsDialog = false" />
+          </template>
+        </v-toolbar>
+      </v-card-title>
+      <v-card-text class="pa-2">
+        <MediaServerSettings />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped lang="scss">

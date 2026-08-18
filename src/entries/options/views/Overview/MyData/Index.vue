@@ -140,7 +140,12 @@ function getSiteAvailability(
 
   if (siteMetadata.type === "private") {
     // Cookie 只能说明浏览器存在相关站点 Cookie，只有用户信息成功解析才代表站点当前可用。
-    if (hasAccess !== true || userInfo.status !== EResultParseStatus.success) {
+    if (
+      hasAccess !== true ||
+      userInfo.status !== EResultParseStatus.success ||
+      typeof userInfo.name !== "string" ||
+      !userInfo.name.trim()
+    ) {
       return "notDiscovered";
     }
   }
@@ -279,6 +284,11 @@ async function openSite(siteId: TSiteID) {
   }
 }
 
+async function refreshSites(sites: TSiteID[]) {
+  await flushSiteLastUserInfo(sites);
+  await Promise.all([loadSiteCatalog(), initTableData()]);
+}
+
 async function multiFlush() {
   let flushSiteIds: TSiteID[] = tableSelected.value;
   if (flushSiteIds.length === 0) {
@@ -287,7 +297,7 @@ async function multiFlush() {
   }
 
   if (flushSiteIds.length > 0) {
-    flushSiteLastUserInfo(flushSiteIds);
+    await refreshSites(flushSiteIds);
   } else {
     runtimeStore.showSnakebar(t("MyData.index.noSiteSelectedCancelRefresh"), { color: "warning" });
   }
@@ -606,7 +616,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <!-- 用户名，用户ID -->
       <template #item.name="{ item }">
         <span :title="item.id as string" class="text-no-wrap">
-          {{ configStore.myDataTableControl.showUserName ? (item.name ?? "-") : "******" }}
+          {{ item.name ?? "-" }}
         </span>
       </template>
 
@@ -854,7 +864,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
             color="green"
             icon="mdi-cached"
             size="small"
-            @click="() => flushSiteLastUserInfo([item.site])"
+            @click="() => refreshSites([item.site])"
           ></v-btn>
         </v-btn-group>
       </template>

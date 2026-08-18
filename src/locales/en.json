@@ -110,6 +110,7 @@
     }
   },
   "MediaServerEntity": {
+    "settings": "Media server settings",
     "ItemInformationDialog": {
       "duration": "Duration: ",
       "mediaInfo": "Media Info: ",
@@ -123,6 +124,7 @@
     "searchPlaceholder": "Search term"
   },
   "MyClient": {
+    "settings": "Downloader settings",
     "action": {
       "delete": "Delete",
       "pause": "Pause",
@@ -262,7 +264,6 @@
       "showSeedingBonus": "Show Seeding Bonus",
       "showSiteName": "Show Site Name",
       "showUnreadMessage": "Show Unread Messages",
-      "showUserName": "Show Username",
       "simplifyBonusNumbers": "Simplify Bonus Numbers",
       "siteCategory": "Category",
       "siteStatus": "Status",

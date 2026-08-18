@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { provide, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { type ISiteUserConfig, type TSiteID } from "@ptd/site";
+import { applySiteUserConfigDefaults, type ISiteUserConfig, type TSiteID } from "@ptd/site";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 
@@ -25,11 +25,14 @@ async function patchSite() {
   showDialog.value = false;
 }
 
-function dialogEnter() {
-  storedSiteUserConfig.value = {
+async function dialogEnter() {
+  const siteMetadata = await metadataStore.getSiteMetadata(props.siteId);
+  const siteUserConfig = {
     valid: false,
     ...(metadataStore.sites[props.siteId] ?? {}),
   };
+  applySiteUserConfigDefaults(siteMetadata, siteUserConfig);
+  storedSiteUserConfig.value = siteUserConfig;
 }
 </script>
 

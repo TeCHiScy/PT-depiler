@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { watch, ref, onMounted, inject, computed } from "vue";
+import { watch, ref, onMounted, inject, computed, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { set } from "es-toolkit/compat";
-import type { timezoneOffset, ISiteUserConfig, TSiteID, ISiteMetadata, TSiteUrl } from "@ptd/site";
+import {
+  applySiteUserConfigDefaults,
+  type timezoneOffset,
+  type ISiteUserConfig,
+  type TSiteID,
+  type ISiteMetadata,
+  type TSiteUrl,
+} from "@ptd/site";
 
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { formatDate, formValidateRules } from "@/options/utils.ts";
@@ -17,7 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const siteMetaData = ref<ISiteMetadata>({} as unknown as ISiteMetadata);
-const siteUserConfig = inject<ISiteUserConfig>("storedSiteUserConfig", {});
+const siteUserConfig = inject<Ref<ISiteUserConfig>>("storedSiteUserConfig", ref<ISiteUserConfig>({}));
 const siteName = computed({
   get: () => siteUserConfig.value.merge?.name ?? siteMetaData.value.name,
   set: (value) => set(siteUserConfig.value, "merge.name", value),
@@ -37,13 +44,12 @@ function updateFormValid(v: boolean) {
 async function initSiteData(siteId: TSiteID, flush = false) {
   console.debug("initSiteData", siteId, flush);
   siteMetaData.value = await metadataStore.getSiteMetadata(siteId);
-  siteUserConfig.value = toMerged(
-    { inputSetting: {}, url: siteMetaData.value.urls[0] },
-    await metadataStore.getSiteUserConfig(siteId, flush),
-  );
+  const storedConfig = toMerged({}, await metadataStore.getSiteUserConfig(siteId, flush)) as ISiteUserConfig;
+  applySiteUserConfigDefaults(siteMetaData.value, storedConfig);
+  siteUserConfig.value = toMerged({ inputSetting: {}, url: siteMetaData.value.urls[0] }, storedConfig);
 
   // fix: customSiteUrl not show in Editor (#726)
-  if (!siteMetaData.value.urls.includes(siteUserConfig.value.url)) {
+  if (siteUserConfig.value.url && !siteMetaData.value.urls.includes(siteUserConfig.value.url)) {
     customSiteUrl.value = siteUserConfig.value.url;
   }
 
@@ -183,7 +189,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
 
         <v-divider />
 
-        <template v-if="siteMetaData.userInputSettingMeta && siteUserConfig.inputSetting">
+        <template v-if="siteMetaData.userInputSettingMeta?.length">
           <v-label class="my-2">{{ t("SetSite.Editor.siteSettings") }}</v-label>
 
           <v-text-field

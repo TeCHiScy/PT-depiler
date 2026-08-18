@@ -117,18 +117,6 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("../views/Settings/SetSearchSolution/Index.vue"),
       },
       {
-        path: "/set-downloader",
-        name: "SetDownloader",
-        meta: { icon: "mdi-cloud-download" },
-        component: () => import("../views/Settings/SetDownloader/Index.vue"),
-      },
-      {
-        path: "/set-media-server",
-        name: "SetMediaServer",
-        meta: { icon: "mdi-video-input-svideo" },
-        component: () => import("../views/Settings/SetMediaServer/Index.vue"),
-      },
-      {
         path: "/set-backup",
         name: "SetBackup",
         meta: { icon: "mdi-backup-restore" },
@@ -140,6 +128,18 @@ export const routes: RouteRecordRaw[] = [
     path: "/set-site",
     name: "LegacySetSite",
     redirect: "/my-data",
+    meta: { isMainMenu: false },
+  },
+  {
+    path: "/set-downloader",
+    name: "LegacySetDownloader",
+    redirect: { name: "MyClient", query: { openDownloaderSettings: "1" } },
+    meta: { isMainMenu: false },
+  },
+  {
+    path: "/set-media-server",
+    name: "LegacySetMediaServer",
+    redirect: { name: "MediaServerEntity", query: { openMediaServerSettings: "1" } },
     meta: { isMainMenu: false },
   },
   {

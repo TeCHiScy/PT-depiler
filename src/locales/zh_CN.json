@@ -110,6 +110,7 @@
     }
   },
   "MediaServerEntity": {
+    "settings": "媒体服务器设置",
     "ItemInformationDialog": {
       "duration": "时长：",
       "mediaInfo": "媒体信息：",
@@ -123,6 +124,7 @@
     "searchPlaceholder": "搜索词"
   },
   "MyClient": {
+    "settings": "下载器设置",
     "action": {
       "delete": "删除",
       "pause": "暂停",
@@ -262,7 +264,6 @@
       "showSeedingBonus": "显示做种积分",
       "showSiteName": "显示站点名称",
       "showUnreadMessage": "显示未读消息",
-      "showUserName": "显示用户名",
       "simplifyBonusNumbers": "简化积分数字显示",
       "siteCategory": "分类",
       "siteStatus": "状态",

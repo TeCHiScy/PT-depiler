@@ -16,10 +16,8 @@ import AddDialog from "./AddDialog.vue";
 import EditDialog from "./EditDialog.vue";
 import PathAndTagSuggestDialog from "./PathAndTagSuggestDialog.vue";
 import SiteFilterDialog from "./SiteFilterDialog.vue";
-import DefaultDownloaderEditDialog from "./DefaultDownloaderEditDialog.vue";
 
 import DeleteDialog from "@/options/components/DeleteDialog.vue";
-import NavButton from "@/options/components/NavButton.vue";
 
 const { t } = useI18n();
 const metadataStore = useMetadataStore();
@@ -27,7 +25,6 @@ const configStore = useConfigStore();
 
 const showAddDialog = ref<boolean>(false);
 const showEditDialog = ref<boolean>(false);
-const showDefaultDownloaderEditDialog = ref<boolean>(false);
 const showSiteFilterDialog = ref<boolean>(false);
 const showPathAndTagSuggestDialog = ref<boolean>(false);
 const showDeleteDialog = ref<boolean>(false);
@@ -105,31 +102,41 @@ function deleteDownloader(downloaderId: TDownloaderKey[]) {
 async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
   return await metadataStore.removeDownloader(downloaderId);
 }
+
+async function setDefaultDownloader(downloaderId: TDownloaderKey) {
+  if (downloaderId === metadataStore.defaultDownloader?.id) return;
+
+  metadataStore.defaultDownloader = {
+    id: downloaderId,
+    folder: "",
+    tags: "",
+  };
+  await metadataStore.$save();
+}
 </script>
 
 <template>
   <v-card class="set-downloader">
     <v-card-title>
       <v-row class="ma-0">
-        <NavButton :text="t('common.btn.add')" color="success" icon="mdi-plus" @click="showAddDialog = true" />
+        <v-btn
+          :title="t('common.btn.add')"
+          color="success"
+          icon="mdi-plus"
+          variant="text"
+          @click="showAddDialog = true"
+        />
 
-        <NavButton
+        <v-btn
           :disabled="tableSelected.length === 0"
-          :text="t('common.remove')"
+          :title="t('common.remove')"
           color="error"
-          icon="mdi-minus"
+          icon="mdi-delete"
+          variant="text"
           @click="deleteDownloader(tableSelected)"
         />
 
         <v-divider class="mx-2" inset vertical />
-
-        <NavButton
-          :disabled="metadataStore.getDownloaders.length == 0"
-          :text="t('SetDownloader.index.editDefaultDownloaderBtn')"
-          color="indigo"
-          icon="mdi-auto-download"
-          @click="showDefaultDownloaderEditDialog = true"
-        />
 
         <v-spacer />
 
@@ -193,15 +200,15 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
       :filter-keys="['id']"
       :headers="fullTableHeader"
       :items="metadataStore.getDownloaders"
-      :items-per-page="configStore.tableBehavior.SetDownloader.itemsPerPage"
+      :items-per-page="-1"
       :search="tableFilterRef"
       :sort-by="configStore.tableBehavior.SetDownloader.sortBy"
       class="table-stripe table-header-no-wrap"
+      hide-default-footer
       hover
       item-value="id"
       :multi-sort="configStore.enableTableMultiSort"
       show-select
-      @update:itemsPerPage="(v) => configStore.updateTableBehavior('SetDownloader', 'itemsPerPage', v)"
       @update:sortBy="(v) => configStore.updateTableBehavior('SetDownloader', 'sortBy', v)"
     >
       <template #item.type="{ item }">
@@ -266,6 +273,15 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
           />
 
           <v-btn
+            :disabled="item.id == metadataStore.defaultDownloader?.id"
+            :title="t('SetDownloader.index.table.action.setDefault')"
+            color="indigo"
+            icon="mdi-star-outline"
+            size="small"
+            @click="setDefaultDownloader(item.id)"
+          />
+
+          <v-btn
             :title="t('common.edit')"
             color="info"
             icon="mdi-pencil"
@@ -308,7 +324,6 @@ async function confirmDeleteDownloader(downloaderId: TDownloaderKey) {
 
   <AddDialog v-model="showAddDialog" />
   <EditDialog v-model="showEditDialog" :client-id="toEditDownloaderId!" />
-  <DefaultDownloaderEditDialog v-model="showDefaultDownloaderEditDialog" />
   <SiteFilterDialog v-model="showSiteFilterDialog" :client-id="toEditDownloaderId!" />
   <PathAndTagSuggestDialog v-model="showPathAndTagSuggestDialog" :client-id="toEditDownloaderId!" />
   <DeleteDialog v-model="showDeleteDialog" :to-delete-ids="toDeleteIds" :confirm-delete="confirmDeleteDownloader" />

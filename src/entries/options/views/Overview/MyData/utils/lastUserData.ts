@@ -78,24 +78,28 @@ export async function initTableData() {
   await Promise.allSettled(tasks);
 }
 
-export function flushSiteLastUserInfo(sites: TSiteID[]) {
+export function flushSiteLastUserInfo(sites: TSiteID[]): Promise<void[]> {
   const runtimeStore = useRuntimeStore();
-  for (const site of sites) {
-    runtimeStore.userInfo.flushPlan[site] = true;
+  return Promise.all(
+    sites.map(async (site) => {
+      runtimeStore.userInfo.flushPlan[site] = true;
 
-    sendMessage("getSiteUserInfoResult", site)
-      .then((userInfo) => updatePerSiteData(site, userInfo))
-      .catch((e) => {
+      try {
+        const userInfo = await sendMessage("getSiteUserInfoResult", site);
+        // 先更新当前 options 页的 Pinia 快照，再重建站点列表，避免等待持久化同步导致旧状态继续显示。
+        metadataStore.lastUserInfo[site] = userInfo;
+        await updatePerSiteData(site, userInfo);
+      } catch (e) {
         // 首先检查是否还在刷新，如果没有，则说明队列已经取消了，此时不报错
         if (!runtimeStore.userInfo.flushPlan[site]) {
           runtimeStore.showSnakebar(`获取站点 [${site}] 用户信息失败`, { color: "error" });
           console.error(e);
         }
-      })
-      .finally(() => {
+      } finally {
         runtimeStore.userInfo.flushPlan[site] = false;
-      });
-  }
+      }
+    }),
+  );
 }
 
 export async function cancelFlushSiteLastUserInfo() {
