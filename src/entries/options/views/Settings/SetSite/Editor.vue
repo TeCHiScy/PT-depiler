@@ -209,7 +209,16 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
         </template>
 
         <v-row>
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
+            <v-switch
+              v-model="siteUserConfig.allowContentScript"
+              :disabled="siteMetaData.isDead || siteUserConfig.isOffline"
+              :label="t('SetSite.common.allowContentScript')"
+              color="success"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="4">
             <v-switch
               v-model="siteUserConfig.allowSearch"
               :disabled="siteMetaData.isDead || siteUserConfig.isOffline || !Object.hasOwn(siteMetaData, 'search')"
@@ -218,7 +227,7 @@ const timeZone: Array<{ value: timezoneOffset; title: string }> = [
               hide-details
             />
           </v-col>
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
             <v-switch
               v-model="siteUserConfig.allowQueryUserInfo"
               :disabled="siteMetaData.isDead || siteUserConfig.isOffline || !Object.hasOwn(siteMetaData, 'userInfo')"

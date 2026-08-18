@@ -122,6 +122,9 @@ async function loadTorrents() {
   tableSelected.value = [];
   resetRefreshState();
   try {
+    // Chrome 的 offscreen 文档由 service worker 异步创建；刷新必须先等待它就绪，
+    // 否则刚打开页面时首个 getClientTorrents 请求可能早于文档启动而无响应。
+    await sendMessage("ensureOffscreenDocument", undefined);
     // Pinia 的持久化状态是异步恢复的。直接进入页面时，下载器列表可能尚未恢复，
     // 此时点击刷新不能得到任何 activeDownloaderIds；等待恢复后再计算刷新范围。
     await metadataStore.$onReady();

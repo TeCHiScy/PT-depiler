@@ -1,4 +1,4 @@
-import { sendMessage } from "@/messages.ts";
+import { onMessage, sendMessage } from "@/messages.ts";
 
 let creating: Promise<void> | null; // A global promise to avoid concurrency issues
 
@@ -65,6 +65,10 @@ export async function setupOffscreenDocument() {
   // its message handlers. Wait for an explicit response before serving work.
   await waitForOffscreenReady();
 }
+
+onMessage("ensureOffscreenDocument", async () => {
+  await setupOffscreenDocument();
+});
 
 // noinspection JSIgnoredPromiseFromCall
 setupOffscreenDocument();

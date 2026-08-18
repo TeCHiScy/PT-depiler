@@ -57,6 +57,7 @@ interface ProtocolMap extends TMessageMap {
   ping<T extends any>(data?: T): T extends undefined ? "pong" : T;
   openOptionsPage(url?: string | { path: string; query?: Record<string, any> }): void;
   offscreenReady(data?: undefined): boolean;
+  ensureOffscreenDocument(data?: undefined): void;
 
   // 1.1 chrome.downloads
   downloadFile(downloadOptions: chrome.downloads.DownloadOptions): number;

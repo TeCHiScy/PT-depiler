@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useDisplay, type DataTableHeader } from "vuetify";
 import { EResultParseStatus, ETorrentStatus } from "@ptd/site";
@@ -21,6 +21,7 @@ import QuickFilterNotice from "./QuickFilterNotice.vue";
 import SearchStatusDialog from "./SearchStatusDialog.vue";
 import SaveSnapshotDialog from "./SaveSnapshotDialog.vue";
 import AdvanceFilterGenerateDialog from "./AdvanceFilterGenerateDialog.vue";
+import SearchSolutionDefinition from "@/options/views/Settings/SetSearchSolution/Index.vue";
 
 // 主要助手方法
 import { tableCustomFilter } from "./utils/filter";
@@ -28,6 +29,7 @@ import { doSearch, retrySearch, searchPlanStatus, searchQueue } from "./utils/se
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const configStore = useConfigStore();
 const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
@@ -36,6 +38,7 @@ const display = useDisplay();
 const showAdvanceFilterGenerateDialog = ref<boolean>(false);
 const showSearchStatusDialog = ref<boolean>(false);
 const showSaveSnapshotDialog = ref<boolean>(false);
+const showSearchSolutionDialog = ref<boolean>(false);
 
 const fullTableHeader = computed(
   () =>
@@ -107,6 +110,15 @@ watch(
   { immediate: true, deep: true },
 );
 
+function openLegacySearchSolutionSettings() {
+  if (route.query.openSearchSolutions === "1") {
+    showSearchSolutionDialog.value = true;
+    void router.replace({ name: "SearchEntity" });
+  }
+}
+
+watch(() => route.query.openSearchSolutions, openLegacySearchSolutionSettings, { immediate: true });
+
 const isSearchingParsed = ref<boolean>(searchQueue.isPaused);
 
 function pauseSearchQueue() {
@@ -170,6 +182,18 @@ const hiddenTagNamesText = computed({
               color="primary"
               icon="mdi-list-status"
               @click="showSearchStatusDialog = true"
+            />
+          </div>
+
+          <v-divider vertical class="mx-2" />
+
+          <div class="search-toolbar__button-group">
+            <v-btn
+              :title="t('route.Settings.SetSearchSolution')"
+              color="indigo"
+              icon="mdi-widgets"
+              size="large"
+              @click="showSearchSolutionDialog = true"
             />
           </div>
 
@@ -415,6 +439,25 @@ const hiddenTagNamesText = computed({
   <AdvanceFilterGenerateDialog v-model="showAdvanceFilterGenerateDialog" />
   <SearchStatusDialog v-model="showSearchStatusDialog" />
   <SaveSnapshotDialog v-model="showSaveSnapshotDialog" />
+  <v-dialog v-model="showSearchSolutionDialog" fullscreen scrollable>
+    <v-card>
+      <v-toolbar color="blue-grey-darken-2">
+        <v-toolbar-title>{{ t("route.Settings.SetSearchSolution") }}</v-toolbar-title>
+        <template #append>
+          <v-btn
+            :title="t('common.dialog.close')"
+            icon="mdi-close"
+            size="large"
+            @click="showSearchSolutionDialog = false"
+          />
+        </template>
+      </v-toolbar>
+      <v-divider />
+      <v-card-text class="pa-0">
+        <SearchSolutionDefinition embedded />
+      </v-card-text>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped lang="scss">

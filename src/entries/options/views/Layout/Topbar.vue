@@ -8,7 +8,6 @@ import { useConfigStore } from "@/options/stores/config.ts";
 import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useRuntimeStore } from "@/options/stores/runtime.ts";
 
-import { REPO_URL } from "~/helper";
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import SiteName from "@/options/components/SiteName.vue";
 import RecommendationMenu from "./RecommendationMenu.vue";
@@ -21,11 +20,6 @@ const { t } = useI18n();
 const configStore = useConfigStore();
 const metadataStore = useMetadataStore();
 const runtimeStore = useRuntimeStore();
-
-const appendMenu = computed<Array<{ title: string; icon: string; [str: string]: any }>>(() => [
-  { title: t("layout.header.home"), icon: "mdi-home", href: REPO_URL },
-  { title: t("layout.header.wiki"), icon: "mdi-help-circle", href: `${REPO_URL}/wiki` },
-]);
 
 const searchKey = ref<string>("");
 const searchPlanKey = ref<string>("default");
@@ -54,6 +48,14 @@ function startSearchEntity() {
 function searchRecommendation(title: string) {
   searchKey.value = title;
   startSearchEntity();
+}
+
+function openGeneralSettings() {
+  void router.push({ name: "SetBaseUi" });
+}
+
+function openBackupSettings() {
+  void router.push({ name: "SetBackup" });
 }
 
 watch(
@@ -206,47 +208,22 @@ watch(
     <v-spacer v-if="display.smAndUp.value" />
 
     <template #append>
-      <template v-if="!display.mdAndDown.value">
-        <!-- 处于大屏幕，完整显示所有btn -->
-        <v-btn
-          v-for="(append, index) in appendMenu"
-          :key="index"
-          v-bind.prop="append.prop"
-          :append-icon="append.icon"
-          :href="append.href"
-          :title="append.title"
-          rel="noopener noreferrer nofollow"
-          size="large"
-          target="_blank"
-          variant="text"
-        >
-          <span class="ml-1">{{ append.title }}</span>
-        </v-btn>
-      </template>
-
-      <template v-else>
-        <!-- 处于小屏幕，只显示点，btn以menu列表形式展示 -->
-        <v-menu bottom left offset-y>
-          <template #activator="{ props }">
-            <v-btn :title="t('layout.header.expand')" v-bind="props" icon="mdi-dots-vertical" variant="text" />
-          </template>
-
-          <v-list>
-            <v-list-item
-              v-for="(item, index) in appendMenu"
-              :key="index"
-              :href="item.href"
-              :prepend-icon="item.icon"
-              :title="item.title"
-              variant="text"
-              rel="noopener noreferrer nofollow"
-              size="large"
-              class="menu-item list-item-none-spacer"
-              target="_blank"
-            />
-          </v-list>
-        </v-menu>
-      </template>
+      <v-btn
+        :title="t('route.Settings.SetBase')"
+        color="indigo"
+        icon="mdi-cog"
+        size="large"
+        variant="text"
+        @click="openGeneralSettings"
+      />
+      <v-btn
+        :title="t('route.Settings.SetBackup')"
+        color="blue"
+        icon="mdi-backup-restore"
+        size="large"
+        variant="text"
+        @click="openBackupSettings"
+      />
     </template>
   </v-app-bar>
 </template>

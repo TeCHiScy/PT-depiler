@@ -95,7 +95,7 @@ export const routes: RouteRecordRaw[] = [
     path: "/settings",
     name: "Settings",
     redirect: "/set-base",
-    meta: { isMainMenu: true },
+    meta: { isMainMenu: false },
     children: [
       {
         path: "/set-base",
@@ -103,12 +103,6 @@ export const routes: RouteRecordRaw[] = [
         meta: { icon: "mdi-cog" },
         component: () => import("../views/Settings/SetBase/Index.vue"),
         children: setBaseChildren,
-      },
-      {
-        path: "/set-search-solution",
-        name: "SetSearchSolution",
-        meta: { icon: "mdi-widgets" },
-        component: () => import("../views/Settings/SetSearchSolution/Index.vue"),
       },
       {
         path: "/set-backup",
@@ -134,6 +128,12 @@ export const routes: RouteRecordRaw[] = [
     path: "/set-media-server",
     name: "LegacySetMediaServer",
     redirect: { name: "MediaServerEntity", query: { openMediaServerSettings: "1" } },
+    meta: { isMainMenu: false },
+  },
+  {
+    path: "/set-search-solution",
+    name: "LegacySetSearchSolution",
+    redirect: { name: "SearchEntity", query: { openSearchSolutions: "1" } },
     meta: { isMainMenu: false },
   },
   {

@@ -21,25 +21,19 @@ watch(display.mdAndUp, () => {
   configStore.isNavBarOpen = display.mdAndUp.value;
 });
 
-// 自动从router.ts生成目录
+// 自动从 router.ts 生成目录。左侧只保留实际业务页面，隐藏“概览/参数设置”分组标题；
+// 常规设置和备份与恢复由顶部工具栏进入。
 const menuOptions = routes
   .filter((route) => route.meta?.isMainMenu)
-  .map((route) => {
-    return {
-      title: `route.${String(route.name)}.default`,
-      name: route.name,
-      icon: route.meta?.icon,
-      children: route
-        .children!.filter((childrenRoute) => !(childrenRoute.meta?.show === false)) // 允许通过 meta.show = false 隐藏子路由
-        .map((childrenRoute) => {
-          return {
-            title: `route.${String(route.name)}.${String(childrenRoute.name)}`,
-            name: childrenRoute.name,
-            icon: childrenRoute.meta?.icon,
-          };
-        }),
-    };
-  }); // 根据 meta 的 isMainMenu 属性筛选出应该列在目录中的路径
+  .flatMap((route) =>
+    (route.children ?? [])
+      .filter((childrenRoute) => !(childrenRoute.meta?.show === false)) // 允许通过 meta.show = false 隐藏子路由
+      .map((childrenRoute) => ({
+        title: `route.${String(route.name)}.${String(childrenRoute.name)}`,
+        name: childrenRoute.name,
+        icon: childrenRoute.meta?.icon,
+      })),
+  );
 
 function clickMenuItem() {
   if (display.smAndDown.value && configStore.isNavBarOpen) {
@@ -52,22 +46,17 @@ function clickMenuItem() {
   <v-navigation-drawer id="ptd-navigation" v-model="configStore.isNavBarOpen" :width="220" expand-on-hover permanent>
     <!-- 侧边栏导航标题 -->
     <v-list density="compact" nav>
-      <template v-for="(group, groupIndex) in menuOptions" :key="groupIndex">
-        <v-list-subheader class="text-grey-darken-1">
-          {{ t(group.title) }}
-        </v-list-subheader>
-        <v-list-item
-          v-for="(nav, navIndex) in group.children"
-          :key="`${groupIndex}-${navIndex}`"
-          :prepend-icon="nav.icon! as string"
-          :to="{ name: nav.name }"
-          :value="nav"
-          class="list-item-half-spacer"
-          @click="clickMenuItem"
-        >
-          {{ t(nav.title) }}
-        </v-list-item>
-      </template>
+      <v-list-item
+        v-for="(nav, navIndex) in menuOptions"
+        :key="`${String(nav.name)}-${navIndex}`"
+        :prepend-icon="nav.icon! as string"
+        :to="{ name: nav.name }"
+        :value="nav"
+        class="list-item-half-spacer"
+        @click="clickMenuItem"
+      >
+        {{ t(nav.title) }}
+      </v-list-item>
     </v-list>
 
     <!-- 页脚，用于展示版本信息 -->

@@ -73,7 +73,6 @@ const fullTableHeader = reactive([
   { title: t("common.username"), key: "name", align: "center" },
   { title: t("SetSite.common.groups"), key: "siteUserConfig.groups", align: "left", sortable: false },
   { title: t("SetSite.common.isOffline"), key: "siteUserConfig.isOffline", align: "center" },
-  { title: t("SetSite.common.allowContentScript"), key: "siteUserConfig.allowContentScript", align: "center" },
   { title: t("MyData.table.levelName"), key: "levelName", align: "start", width: "15%" },
   // NOTE: 这里将key设为 uploaded, trueUploaded 而不是虚拟的 userData，可以让 v-data-table 使用 uploaded 的进行排序
   { title: t("MyData.table.userData"), key: "uploaded", align: "end" },
@@ -93,12 +92,10 @@ const fullTableHeader = reactive([
 ] as TExtendDataTableHeader[]);
 
 const tableHeader = computed(() => {
-  return fullTableHeader.filter((item: TExtendDataTableHeader) => {
-    if (item.key === "siteUserConfig.allowContentScript") {
-      return true;
-    }
-    return item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!);
-  }) as DataTableHeader[];
+  return fullTableHeader.filter(
+    (item: TExtendDataTableHeader) =>
+      item?.props?.disabled || configStore.tableBehavior.MyData.columns!.includes(item.key!),
+  ) as DataTableHeader[];
 });
 
 const tableNonBooleanControlKey = [
@@ -692,17 +689,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           color="success"
           hide-details
           @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'isOffline', v as boolean)"
-        />
-      </template>
-
-      <template #item.siteUserConfig.allowContentScript="{ item }">
-        <v-switch
-          v-model="item.siteUserConfig.allowContentScript"
-          :disabled="!item.isConfigured || item.metadata.isDead || item.siteUserConfig.isOffline"
-          class="table-switch-btn"
-          color="success"
-          hide-details
-          @update:model-value="(v) => metadataStore.simplePatch('sites', item.site, 'allowContentScript', v as boolean)"
         />
       </template>
 
