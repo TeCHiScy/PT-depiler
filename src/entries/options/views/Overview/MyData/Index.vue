@@ -288,15 +288,6 @@ function getCatalogUserInfo(item: ISiteCatalogItem): IUserInfo | undefined {
   return typeof item.status === "undefined" ? undefined : (item as IUserInfo);
 }
 
-async function multiOpen() {
-  for (const siteId of actionSiteIds.value) {
-    const siteUrl = await metadataStore.getSiteUrl(siteId);
-    if (siteUrl) {
-      window.open(siteUrl, "_blank", "noopener noreferrer");
-    }
-  }
-}
-
 async function openSite(siteId: TSiteID) {
   const siteUrl = await metadataStore.getSiteUrl(siteId);
   if (siteUrl) {
@@ -367,15 +358,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           @click="multiFlush"
         />
 
-        <v-btn
-          :disabled="actionSiteIds.length === 0"
-          color="indigo"
-          icon="mdi-open-in-new"
-          :title="t('MyData.index.multiOpen')"
-          variant="text"
-          @click="multiOpen"
-        />
-
         <v-combobox
           v-model="siteStatusFilter"
           :items="siteStatusFilterItems"
@@ -418,8 +400,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           variant="text"
           @click="viewStatistic"
         />
-
-        <v-divider class="mx-2" vertical />
 
         <v-divider class="mx-2" vertical />
 

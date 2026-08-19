@@ -229,7 +229,6 @@
         "alive": "相对时间",
         "aliveWeek": "相对周数"
       },
-      "multiOpen": "批量打开",
       "noSiteDisplayedCancelRefresh": "当前列表没有可刷新的站点",
       "normalizeLevelName": "使用站点定义的等级名称",
       "onlyShowUserLevelRequirement": "只显示等级要求中的升级队列",

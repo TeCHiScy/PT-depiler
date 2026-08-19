@@ -229,7 +229,6 @@
         "alive": "Relative Time",
         "aliveWeek": "Relative Weeks"
       },
-      "multiOpen": "Open in batch",
       "noSiteDisplayedCancelRefresh": "No visible sites to refresh",
       "normalizeLevelName": "Use Site-defined Level Name",
       "onlyShowUserLevelRequirement": "Only show the upgrade queue in level requirements",
