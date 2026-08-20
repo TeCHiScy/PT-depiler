@@ -8,7 +8,7 @@ import type { TLocalDownloadMethod } from "../common/download.ts";
 
 export const supportTheme = ["auto", "light", "dark"] as const;
 export type supportThemeType = (typeof supportTheme)[number];
-type UiTableBehaviorKey = "SetSite" | "SearchEntity" | "MyData" | "DownloadHistory" | "MyClient" | string;
+type UiTableBehaviorKey = "SetSite" | "SearchEntity" | "MyData" | "DownloadHistory" | string;
 interface UiTableBehaviorItem<T = string> {
   itemsPerPage?: number;
   columns?: T[];
@@ -173,9 +173,6 @@ export interface IConfigPiniaStorageSchema {
     localDownloadMethod: TLocalDownloadMethod;
     // 当使用本地方法下载时，是否忽略站点的下载间隔设置；
     ignoreSiteDownloadIntervalWhenLocalDownload: boolean;
-
-    // 在我的下载器页面，进入时即刷新下载器
-    initDownloaderTorrentOnEnter: boolean;
 
     // 是否保存上一次使用的下载器
     saveLastDownloader: boolean;

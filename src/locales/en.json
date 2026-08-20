@@ -123,81 +123,6 @@
     "noItems": "No Items, use Search Input or Load More Button to Load",
     "searchPlaceholder": "Search term"
   },
-  "MyClient": {
-    "settings": "Downloader settings",
-    "action": {
-      "delete": "Delete",
-      "pause": "Pause",
-      "pauseError": "Failed to pause",
-      "pauseSelectedSuccess": "Paused {count} torrent(s)",
-      "pauseSuccess": "Paused successfully",
-      "resume": "Resume",
-      "resumeError": "Failed to resume",
-      "resumeSelectedSuccess": "Resumed {count} torrent(s)",
-      "resumeSuccess": "Resumed successfully",
-      "viewRaw": "View Raw"
-    },
-    "autoRefresh": {
-      "btnTitle": "Auto-Refresh",
-      "clientSuspended": "{name} failed 3 times in a row. Auto-refresh suspended. Click the chip to resume.",
-      "downloaderFilter": "Downloader Filter",
-      "intervalLabel": "Refresh interval",
-      "intervalUnit": "seconds (0 = off)",
-      "resumeDownloader": "Resume auto-refresh for this downloader",
-      "start": "Start auto-refresh",
-      "stop": "Stop auto-refresh",
-      "stopDownloader": "Stop auto-refresh for this downloader",
-      "suspendedTip": "This client has been suspended due to 3 consecutive failures. Click the alert icon to resume."
-    },
-    "clientStatusDialog": {
-      "openBtn": "All Downloaders Status",
-      "openClient": "Open Downloader",
-      "title": "Downloader Status",
-      "torrentCount": "{count} torrent(s)"
-    },
-    "columnSelector": "Columns",
-    "deleteSelected": "Delete",
-    "dialog": {
-      "removeData": "Also remove data"
-    },
-    "pauseSelected": "Pause",
-    "pushToDownloader": {
-      "fileInputHint": "Select one or more .torrent files to push",
-      "fileInputLabel": "Torrent Files",
-      "modeFile": "Torrent File",
-      "modeUrl": "Link / Magnet",
-      "navBtn": "Push to Downloader",
-      "title": "Push to Downloader",
-      "urlInputHint": "One URL or magnet link per line",
-      "urlInputLabel": "URLs / Magnet Links"
-    },
-    "refresh": "Refresh",
-    "resumeSelected": "Resume",
-    "searchPlaceholder": "Search by name, hash, label, or path",
-    "state": {
-      "checking": "Checking",
-      "downloading": "Downloading",
-      "error": "Error",
-      "paused": "Paused",
-      "queued": "Queued",
-      "seeding": "Seeding",
-      "unknown": "Unknown"
-    },
-    "table": {
-      "addedAt": "Added At",
-      "client": "Client",
-      "dlSpeed": "Download Speed",
-      "name": "Torrent Name",
-      "progress": "Progress",
-      "ratio": "Ratio",
-      "savePath": "Save Path",
-      "size": "Size",
-      "status": "Status",
-      "totalDownloaded": "Total Download",
-      "totalUploaded": "Total Upload",
-      "upSpeed": "Upload Speed"
-    }
-  },
   "MyData": {
     "HistoryDataView": {
       "action": {
@@ -479,10 +404,8 @@
       "undoKeyTitle": "Restore previous key"
     },
     "download": {
-      "MyClientTitle": "My Downloader",
       "allowDirectSendToClient": "Allow sending links directly (instead of torrent files) to the download server (Do not enable unless necessary)",
       "enableSiteFilter": "Enable site filter (configure per-downloader site filtering in downloader settings)",
-      "initDownloaderTorrentOnEnter": "Automatically load torrents from the downloader when entering the My Downloader page",
       "localDownloadIgnoreInterval": "Ignore site download interval limit for local downloads",
       "localDownloadMethod": "Local Download Method",
       "localDownloadMethodOptions": {
@@ -1084,7 +1007,7 @@
       "DownloadHistory": "Download History",
       "KeepUploadTask": "Reseed Task",
       "MediaServerEntity": "Media Library",
-      "MyClient": "Downloader",
+      "SetDownloader": "Downloader Settings",
       "MyCollection": "Collection",
       "MyData": "Sites",
       "SearchEntity": "Search Results",

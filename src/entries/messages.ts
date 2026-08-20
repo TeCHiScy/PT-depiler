@@ -16,7 +16,6 @@ import type {
 } from "@ptd/social";
 import type { IMediaServerId, IMediaServerSearchOptions, IMediaServerSearchResult } from "@ptd/mediaServer";
 import type { IBackupData, IBackupFileInfo } from "@ptd/backupServer";
-import type { CTorrent, TorrentClientStatus } from "@ptd/downloader";
 
 // 可序列化的种子信息，用于辅种检测
 export interface ITorrentInfoForVerification {
@@ -159,15 +158,8 @@ interface ProtocolMap extends TMessageMap {
 
   // 2.3 下载器、下载历史 ( utils/download )
   getDownloaderConfig(downloaderId: string): IDownloaderMetadata;
-  getDownloaderVersion(downloaderId: string): string;
-  getDownloaderStatus(downloaderId: string): TorrentClientStatus;
   getTorrentDownloadLink(torrent: ITorrent): string;
   getTorrentInfoForVerification(torrent: ITorrent): ITorrentInfoForVerification;
-
-  getClientTorrents(downloaderId: string): CTorrent[];
-  deleteClientTorrent(data: { downloaderId: string; id: any; removeData?: boolean }): boolean;
-  pauseClientTorrent(data: { downloaderId: string; id: any }): boolean;
-  resumeClientTorrent(data: { downloaderId: string; id: any }): boolean;
 
   downloadTorrent(data: IDownloadTorrentOption): IDownloadTorrentResult;
 

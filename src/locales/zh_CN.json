@@ -123,81 +123,6 @@
     "noItems": "暂无内容，请使用搜索框或点击加载更多按钮",
     "searchPlaceholder": "搜索词"
   },
-  "MyClient": {
-    "settings": "下载器设置",
-    "action": {
-      "delete": "删除",
-      "pause": "暂停",
-      "pauseError": "暂停失败",
-      "pauseSelectedSuccess": "已暂停 {count} 个种子",
-      "pauseSuccess": "暂停成功",
-      "resume": "开始",
-      "resumeError": "开始失败",
-      "resumeSelectedSuccess": "已开始 {count} 个种子",
-      "resumeSuccess": "开始成功",
-      "viewRaw": "查看原始数据"
-    },
-    "autoRefresh": {
-      "btnTitle": "自动刷新",
-      "clientSuspended": "{name} 刷新失败 3 次，已暂停自动刷新。点击下载器标签可恢复。",
-      "downloaderFilter": "下载器筛选",
-      "intervalLabel": "刷新间隔",
-      "intervalUnit": "秒（0 表示关闭）",
-      "resumeDownloader": "恢复该下载器的自动刷新",
-      "start": "开始自动刷新",
-      "stop": "停止自动刷新",
-      "stopDownloader": "停止该下载器的自动刷新",
-      "suspendedTip": "该下载器已因连续失败 3 次而被暂停。点击感叹号图标可恢复。"
-    },
-    "clientStatusDialog": {
-      "openBtn": "全部下载器状态",
-      "openClient": "打开下载器",
-      "title": "下载器状态",
-      "torrentCount": "{count} 个种子"
-    },
-    "columnSelector": "自定义列",
-    "deleteSelected": "删除",
-    "dialog": {
-      "removeData": "同时删除数据"
-    },
-    "pauseSelected": "暂停",
-    "pushToDownloader": {
-      "fileInputHint": "选择一个或多个 .torrent 文件进行推送",
-      "fileInputLabel": "种子文件",
-      "modeFile": "种子文件",
-      "modeUrl": "链接 / 磁力",
-      "navBtn": "推送到下载器",
-      "title": "推送到下载器",
-      "urlInputHint": "每行一个链接或磁力链接",
-      "urlInputLabel": "下载链接 / 磁力链接"
-    },
-    "refresh": "刷新",
-    "resumeSelected": "开始",
-    "searchPlaceholder": "搜索种子名称、Hash、标签、路径",
-    "state": {
-      "checking": "检查中",
-      "downloading": "下载中",
-      "error": "错误",
-      "paused": "已暂停",
-      "queued": "排队中",
-      "seeding": "做种中",
-      "unknown": "未知"
-    },
-    "table": {
-      "addedAt": "添加时间",
-      "client": "下载器",
-      "dlSpeed": "下载速度",
-      "name": "种子名称",
-      "progress": "进度",
-      "ratio": "分享率",
-      "savePath": "保存路径",
-      "size": "大小",
-      "status": "状态",
-      "totalDownloaded": "总下载量",
-      "totalUploaded": "总上传量",
-      "upSpeed": "上传速度"
-    }
-  },
   "MyData": {
     "HistoryDataView": {
       "action": {
@@ -481,7 +406,6 @@
     "download": {
       "allowDirectSendToClient": "是否允许直接将链接（而不是种子文件）发送到下载服务器（如非必要请勿启用）",
       "enableSiteFilter": "启用站点过滤器（启用后可在下载器设置中配置每个下载器可使用的站点）",
-      "initDownloaderTorrentOnEnter": "进入 我的下载器 页面时，自动加载下载器中的种子信息",
       "localDownloadIgnoreInterval": "本地下载时忽略站点下载间隔限制",
       "localDownloadMethod": "本地下载方式",
       "localDownloadMethodOptions": {
@@ -493,7 +417,6 @@
         "webTip": "打开下载链接对应的页面（只适用于最简单的方式，如果不符合条件，则会回落到 @:SetBase.download.localDownloadMethodOptions.extension ）"
       },
       "localDownloadTitle": "本地下载",
-      "myClientTitle": "我的下载器页面设置",
       "pushDownloadServerTitle": "下载服务器推送",
       "quickSendToClientNote": "启用快速推送后，插件会在推送下载任务时，做以下默认操作：<br />1. 展平 下载器和下载目录 选项供直接点击推送。<br />2. 鼠标移到选项时，则会暂开标签列表，点击时会额外添加标签信息。<br />3. 均采用本地中转模式推送种子，且 `是否自动开始下载` 等基本设置项和下载器专有配置项值由下载器设置和站点设置决定。",
       "saveDownloadHistory": "是否保存下载历史（如非必要请勿关闭此功能）",
@@ -1081,7 +1004,7 @@
       "DownloadHistory": "下载历史",
       "KeepUploadTask": "辅种任务",
       "MediaServerEntity": "媒体库",
-      "MyClient": "下载器",
+      "SetDownloader": "下载器设置",
       "MyCollection": "收藏列表",
       "MyData": "站点",
       "SearchEntity": "搜索结果",

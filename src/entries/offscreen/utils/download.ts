@@ -3,13 +3,7 @@ import { stringify } from "urlencode";
 import { toMerged } from "es-toolkit";
 import { isEmpty } from "es-toolkit/compat";
 
-import {
-  getDownloader,
-  getRemoteTorrentFile,
-  type CTorrent,
-  type CAddTorrentOptions,
-  type TorrentClientStatus,
-} from "@ptd/downloader";
+import { getDownloader, getRemoteTorrentFile, type CAddTorrentOptions } from "@ptd/downloader";
 import type { ITorrent } from "@ptd/site";
 
 import { onMessage, sendMessage } from "@/messages.ts";
@@ -66,28 +60,6 @@ export async function getDownloaderInstance(downloaderId: string): Promise<Downl
 
 onMessage("getDownloaderConfig", async ({ data: downloaderId }) => await getDownloaderConfig(downloaderId));
 
-onMessage("getDownloaderVersion", async ({ data: downloaderId }) => {
-  let downloaderVersion = "unknown";
-
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    downloaderVersion = await downloaderInstance.getClientVersion();
-  }
-
-  return downloaderVersion;
-});
-
-onMessage("getDownloaderStatus", async ({ data: downloaderId }) => {
-  let downloaderStatus: TorrentClientStatus = { dlSpeed: 0, upSpeed: 0, dlData: 0, upData: 0 };
-
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    downloaderStatus = await downloaderInstance.getClientStatus();
-  }
-
-  return downloaderStatus;
-});
-
 export async function getTorrentDownloadLink(torrent: ITorrent) {
   const site = await getSiteInstance<"public">(torrent.site);
   return await site.getTorrentDownloadLink(torrent);
@@ -118,44 +90,6 @@ export async function getTorrentInfoForVerification(torrent: ITorrent) {
 }
 
 onMessage("getTorrentInfoForVerification", async ({ data: torrent }) => await getTorrentInfoForVerification(torrent));
-
-onMessage("getClientTorrents", async ({ data: downloaderId }) => {
-  let downloaderTorrents: CTorrent[] = [];
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    downloaderTorrents = await downloaderInstance.getAllTorrents();
-  }
-  return downloaderTorrents;
-});
-
-onMessage("deleteClientTorrent", async ({ data: { downloaderId, id, removeData } }) => {
-  let deleteStatus: boolean = false;
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    deleteStatus = await downloaderInstance.removeTorrent(id, removeData ?? false);
-  }
-  return deleteStatus;
-});
-
-onMessage("pauseClientTorrent", async ({ data: { downloaderId, id } }) => {
-  let pauseStatus: boolean = false;
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    pauseStatus = await downloaderInstance.pauseTorrent(id);
-  }
-
-  return pauseStatus;
-});
-
-onMessage("resumeClientTorrent", async ({ data: { downloaderId, id } }) => {
-  let resumeStatus: boolean = false;
-  const downloaderInstance = await getDownloaderInstance(downloaderId);
-  if (downloaderInstance) {
-    resumeStatus = await downloaderInstance.resumeTorrent(id);
-  }
-
-  return resumeStatus;
-});
 
 function buildDownloadHistory(downloadOption: IDownloadTorrentOption): ITorrentDownloadMetadata {
   const { torrent = {}, downloaderId = "local" } = downloadOption;

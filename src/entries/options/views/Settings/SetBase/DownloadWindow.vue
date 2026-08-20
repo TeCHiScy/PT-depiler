@@ -32,18 +32,6 @@ async function clearLastDownloader(v: boolean) {
 
   <v-row>
     <v-col md="10" lg="8">
-      <v-label>{{ t("SetBase.download.myClientTitle") }}</v-label>
-      <v-switch
-        v-model="configStore.download.initDownloaderTorrentOnEnter"
-        :label="t('SetBase.download.initDownloaderTorrentOnEnter')"
-        color="success"
-        hide-details
-      />
-    </v-col>
-  </v-row>
-
-  <v-row>
-    <v-col md="10" lg="8">
       <v-label>{{ t("SetBase.download.localDownloadTitle") }}</v-label>
       <v-select
         v-model="configStore.download.localDownloadMethod"

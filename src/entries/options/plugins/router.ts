@@ -72,10 +72,10 @@ export const routes: RouteRecordRaw[] = [
         component: () => import("../views/Overview/MediaServerEntity/Index.vue"),
       },
       {
-        path: "/my-client",
-        name: "MyClient",
+        path: "/set-downloader",
+        name: "SetDownloader",
         meta: { icon: "mdi-download-network" },
-        component: () => import("../views/Overview/MyClient/Index.vue"),
+        component: () => import("../views/Settings/SetDownloader/Index.vue"),
       },
       {
         path: "/download-history",
@@ -116,12 +116,6 @@ export const routes: RouteRecordRaw[] = [
     path: "/set-site",
     name: "LegacySetSite",
     redirect: "/my-data",
-    meta: { isMainMenu: false },
-  },
-  {
-    path: "/set-downloader",
-    name: "LegacySetDownloader",
-    redirect: { name: "MyClient", query: { openDownloaderSettings: "1" } },
     meta: { isMainMenu: false },
   },
   {

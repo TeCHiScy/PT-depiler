@@ -869,7 +869,7 @@ function observeQbSiteTableRowColors(document: Document, tableDiv: HTMLElement) 
   observedRowColorSource = undefined;
 
   const syncAndObserveSource = () => {
-    const rowColorSource = getNativeQbRowColorSource(document);
+    const rowColorSource = getNativeQbRowColorSource(document) ?? undefined;
     if (rowColorSource === observedRowColorSource) {
       syncQbSiteTableRowColors(document, tableDiv);
       return;
