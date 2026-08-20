@@ -29,6 +29,46 @@ export interface ITorrentInfoForVerification {
   }>;
 }
 
+/** qBittorrent content bridge only receives display data, never site credentials. */
+export interface ISiteBridgeCatalogItem {
+  id: TSiteID;
+  name: string;
+  availability: "ready" | "public" | "needLogin" | "needToken";
+  groups?: string[];
+  isOffline?: boolean;
+  userInfo?: Pick<
+    IUserInfo,
+    | "status"
+    | "updateAt"
+    | "id"
+    | "name"
+    | "levelName"
+    | "joinTime"
+    | "lastAccessAt"
+    | "invites"
+    | "uploaded"
+    | "downloaded"
+    | "trueUploaded"
+    | "trueDownloaded"
+    | "ratio"
+    | "trueRatio"
+    | "uploads"
+    | "leeching"
+    | "snatches"
+    | "seeding"
+    | "seedingSize"
+    | "hnrPreWarning"
+    | "hnrUnsatisfied"
+    | "bonus"
+    | "seedingBonus"
+    | "bonusPerHour"
+    | "seedingBonusPerHour"
+    | "seedingUrl"
+    | "snatchesUrl"
+    | "messageCount"
+  >;
+}
+
 import type { TExtensionStorageKey, IExtensionStorageSchema } from "@/storage.ts";
 import {
   ILoggerItem,
@@ -64,6 +104,8 @@ interface ProtocolMap extends TMessageMap {
 
   // 1.2 chrome.storage
   getExtStorage<T extends TExtensionStorageKey>(key: T): IExtensionStorageSchema[T];
+  getSiteBridgeCatalog(data?: undefined): ISiteBridgeCatalogItem[];
+  getSiteBridgeCatalogData(data?: undefined): ISiteBridgeCatalogItem[];
   setExtStorage<T extends TExtensionStorageKey>(data: { key: T; value: IExtensionStorageSchema[T] }): void;
   ensureSiteMapCache(data: IMetadataPiniaStorageSchema): {
     metadata: IMetadataPiniaStorageSchema;

@@ -220,9 +220,8 @@
       "siteAvailability": {
         "needLogin": "Login required",
         "needToken": "Token required",
-        "notDiscovered": "Not discovered",
         "public": "Public",
-        "ready": "Available"
+        "ready": "Logged in"
       },
       "joinTimeFormat": "Display join time",
       "joinTimeFormatOptions": {
@@ -967,7 +966,17 @@
     "parseResultEmpty": "Failed to parse results",
     "pushTo": "Push to...",
     "pushToDefault": "Push to Default Downloader",
-    "quickSearch": "Quick Search"
+    "quickSearch": "Quick Search",
+    "qbittorrent": {
+      "sites": "Sites",
+      "refresh": "Refresh",
+      "refreshing": "Refreshing…",
+      "empty": "No configured sites",
+      "noUserData": "No user data",
+      "uploaded": "Uploaded",
+      "downloaded": "Downloaded",
+      "seeding": "Seeding"
+    }
   },
   "downloaderLabel": {
     "localDownload": "Local Download"

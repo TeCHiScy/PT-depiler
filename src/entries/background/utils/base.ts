@@ -2,6 +2,7 @@ import { stringify } from "urlencode";
 import { onMessage, sendMessage } from "@/messages.ts";
 import { extStorage } from "@/storage.ts";
 import type { IMetadataPiniaStorageSchema } from "@/shared/types.ts";
+import type { ISiteBridgeCatalogItem } from "@/messages.ts";
 
 import { setupOffscreenDocument } from "./offscreen.ts";
 
@@ -66,6 +67,11 @@ onMessage("getExtStorage", async ({ data: key }) => {
     return await getMetadataStore();
   }
   return await extStorage.getItem(key);
+});
+
+onMessage("getSiteBridgeCatalog", async () => {
+  await setupOffscreenDocument();
+  return await sendMessage("getSiteBridgeCatalogData", undefined);
 });
 
 onMessage("setExtStorage", async ({ data: { key, value } }) => {

@@ -21,6 +21,7 @@ import { useMetadataStore } from "@/options/stores/metadata.ts";
 import { useTableCustomFilter } from "@/options/directives/useAdvanceFilter.ts";
 import { formatDate, formatSize, formatTimeAgo } from "@/options/utils.ts";
 import { getCachedSiteMetadata } from "@/options/utils/siteDefinitionCache.ts";
+import { getSiteAvailability, type TSiteAvailability } from "@/shared/siteAvailability.ts";
 
 import SiteFavicon from "@/options/components/SiteFavicon/Index.vue";
 import ResultParseStatus from "@/options/components/ResultParseStatus.vue";
@@ -48,8 +49,7 @@ const currentDate = new Date();
 
 type TExtendDataTableHeader = DataTableHeader & { props?: any };
 
-type TSiteAvailability = "ready" | "needLogin" | "needToken" | "notDiscovered";
-type TSiteStatusFilter = TSiteAvailability | "public";
+type TSiteStatusFilter = "ready" | "public" | "needLogin" | "needToken";
 
 interface ISiteCatalogItem extends Partial<IUserInfo> {
   site: TSiteID;
@@ -92,97 +92,22 @@ const fullTableHeader = reactive([
   { title: t("common.action"), key: "action", align: "center", sortable: false, props: { disabled: true } },
 ] as TExtendDataTableHeader[]);
 
-const tableHeader = computed(() => {
-  const columns = configStore.tableBehavior.MyData.columns ?? [];
-  return fullTableHeader.filter(
-    (item: TExtendDataTableHeader) =>
-      item?.props?.disabled ||
-      columns.includes(item.key!) ||
-      (item.key === "name" && columns.includes("id")) ||
-      (item.key === "uploaded" && columns.includes("downloaded")) ||
-      (item.key === "trueUploaded" && columns.includes("trueDownloaded")) ||
-      (item.key === "bonus" && columns.includes("seedingBonus")) ||
-      (item.key === "bonusPerHour" && columns.includes("seedingBonusPerHour")) ||
-      (item.key === "seeding" && columns.includes("seedingSize")) ||
-      (item.key === "hnrPreWarning" && columns.includes("hnrUnsatisfied")),
-  ) as DataTableHeader[];
-});
-
-const hasAnyColumn = (columns: string[], ...keys: string[]) => keys.some((key) => columns.includes(key));
-
-const showUploaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "uploaded"));
-const showDownloaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "downloaded"));
-const showTrueUploaded = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "trueUploaded"));
-const showTrueDownloaded = computed(() =>
-  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "trueDownloaded"),
-);
-const showBonus = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "bonus"));
-const showSeedingBonus = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingBonus"));
-const showBonusPerHour = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "bonusPerHour"));
-const showSeedingBonusPerHour = computed(() =>
-  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingBonusPerHour"),
-);
-const showSeeding = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seeding"));
-const showSeedingSize = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "seedingSize"));
-const showHnrPreWarning = computed(() => hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "hnrPreWarning"));
-const showHnrUnsatisfied = computed(() =>
-  hasAnyColumn(configStore.tableBehavior.MyData.columns ?? [], "hnrUnsatisfied"),
-);
-
-const showUserName = computed(() => configStore.tableBehavior.MyData.columns?.includes("name") ?? false);
-const showUserId = computed(() => configStore.tableBehavior.MyData.columns?.includes("id") ?? false);
-
-const tableFilterHeaders = computed(() => {
-  const headers: TExtendDataTableHeader[] = [];
-  for (const item of fullTableHeader) {
-    if (item?.props?.disabled) continue;
-
-    if (item.key === "name") {
-      headers.push({ ...item, title: t("MyData.table.username") });
-      headers.push({ title: t("MyData.table.userId"), key: "id", align: "center" });
-    } else if (item.key === "uploaded") {
-      headers.push({ ...item, title: t("levelRequirement.uploaded") });
-      headers.push({ title: t("levelRequirement.downloaded"), key: "downloaded", align: "end" });
-    } else if (item.key === "trueUploaded") {
-      headers.push({ ...item, title: t("levelRequirement.trueUploaded") });
-      headers.push({ title: t("levelRequirement.trueDownloaded"), key: "trueDownloaded", align: "end" });
-    } else if (item.key === "bonus") {
-      headers.push({ ...item, title: t("levelRequirement.bonus") });
-      headers.push({ title: t("levelRequirement.seedingBonus"), key: "seedingBonus", align: "end" });
-    } else if (item.key === "bonusPerHour") {
-      headers.push({ ...item, title: t("levelRequirement.bonusPerHour") });
-      headers.push({ title: t("levelRequirement.seedingBonusPerHour"), key: "seedingBonusPerHour", align: "end" });
-    } else if (item.key === "seeding") {
-      headers.push({ ...item, title: t("MyData.table.seeding") });
-      headers.push({ title: t("levelRequirement.seedingSize"), key: "seedingSize", align: "end" });
-    } else if (item.key === "hnrPreWarning") {
-      headers.push({ ...item, title: t("levelRequirement.hnrPreWarning") });
-      headers.push({ title: t("levelRequirement.hnrUnsatisfied"), key: "hnrUnsatisfied", align: "end" });
-    } else {
-      headers.push(item);
-    }
-  }
-  headers.push({ title: t("MyData.index.filter.unreadMessage"), key: "messageCount", align: "end" });
-  return headers;
-});
-const alwaysVisibleTableColumns = computed(() =>
-  fullTableHeader
-    .filter((item: TExtendDataTableHeader) => item?.props?.disabled)
-    .map((item: TExtendDataTableHeader) => item.key!),
-);
-const tableFilterColumns = computed(() =>
-  [...new Set(configStore.tableBehavior.MyData.columns ?? [])].filter((key) =>
-    tableFilterHeaders.value.some((item) => item.key === key),
-  ),
-);
-
-function updateTableFilterColumns(columns: string[]) {
-  const uniqueColumns = [...new Set(columns)];
-  configStore.updateTableBehavior("MyData", "columns", [
-    ...alwaysVisibleTableColumns.value,
-    ...uniqueColumns.filter((column) => !alwaysVisibleTableColumns.value.includes(column)),
-  ]);
-}
+// 站点页不再提供列筛选；所有定义列和共享列的第二行都固定展示。
+const tableHeader = fullTableHeader as DataTableHeader[];
+const showUploaded = true;
+const showDownloaded = true;
+const showTrueUploaded = true;
+const showTrueDownloaded = true;
+const showBonus = true;
+const showSeedingBonus = true;
+const showBonusPerHour = true;
+const showSeedingBonusPerHour = true;
+const showSeeding = true;
+const showSeedingSize = true;
+const showHnrPreWarning = true;
+const showHnrUnsatisfied = true;
+const showUserName = true;
+const showUserId = true;
 
 const tableNonBooleanControlKey = [
   "joinTimeFormat",
@@ -199,49 +124,6 @@ const filteredTableBooleanControlKeys = computed(() => {
 
 const siteCatalogData = ref<ISiteCatalogItem[]>([]);
 const isSiteCatalogLoading = ref(false);
-
-function hasRequiredSiteInput(siteMetadata: ISiteMetadata, siteUserConfig: ISiteUserConfig) {
-  const requiredInputs = (siteMetadata.userInputSettingMeta ?? []).filter((item) => item.required);
-  return requiredInputs.every((item) => Boolean(siteUserConfig.inputSetting?.[item.name]?.trim()));
-}
-
-function getSiteAvailability(
-  siteMetadata: ISiteMetadata,
-  siteUserConfig: ISiteUserConfig | undefined,
-  userInfo: Partial<IUserInfo>,
-  hasAccess: boolean | undefined,
-): TSiteAvailability {
-  const requiresManualInput = (siteMetadata.userInputSettingMeta?.length ?? 0) > 0;
-  if (requiresManualInput && (!siteUserConfig || !hasRequiredSiteInput(siteMetadata, siteUserConfig))) {
-    return "needToken";
-  }
-
-  if (!siteUserConfig) {
-    return "notDiscovered";
-  }
-
-  if (userInfo.status === EResultParseStatus.needLogin) {
-    return "needLogin";
-  }
-
-  if (siteMetadata.type === "private") {
-    // Cookie 只能说明浏览器存在相关站点 Cookie；需要 Token 的站点以已配置的必填凭据作为访问信号。
-    // 两种情况下都必须再通过用户信息成功解析，才代表站点当前可用。
-    const hasConfiguredAccess = requiresManualInput
-      ? hasRequiredSiteInput(siteMetadata, siteUserConfig)
-      : hasAccess === true;
-    if (
-      !hasConfiguredAccess ||
-      userInfo.status !== EResultParseStatus.success ||
-      typeof userInfo.name !== "string" ||
-      !userInfo.name.trim()
-    ) {
-      return "notDiscovered";
-    }
-  }
-
-  return "ready";
-}
 
 async function loadSiteCatalog() {
   isSiteCatalogLoading.value = true;
@@ -309,7 +191,7 @@ const {
 const tableSelected = ref<TSiteID[]>([]); // 选中的站点行
 const siteStatusFilter = ref<TSiteStatusFilter[]>(["ready"]);
 const siteStatusFilterItems = computed(() =>
-  (["ready", "public", "needLogin", "needToken", "notDiscovered"] as TSiteStatusFilter[]).map((value) => ({
+  (["ready", "public", "needLogin", "needToken"] as TSiteStatusFilter[]).map((value) => ({
     title: t(`MyData.index.siteAvailability.${value}`),
     value,
   })),
@@ -318,11 +200,7 @@ const siteStatusFilterItems = computed(() =>
 function matchesSiteStatusFilter(item: ISiteCatalogItem): boolean {
   if (siteStatusFilter.value.length === 0) return true;
 
-  return siteStatusFilter.value.some((status) => {
-    if (status === "public") return item.metadata.type === "public";
-    // 公开站点单独归类，避免默认的“可用”同时把公开站点带回来。
-    return item.metadata.type !== "public" && item.availability === status;
-  });
+  return siteStatusFilter.value.some((status) => item.availability === status);
 }
 
 const visibleSiteCatalogData = computed(() => {
@@ -601,28 +479,6 @@ watch(showEditDialog, (isOpen, wasOpen) => {
           </v-list>
         </v-menu>
 
-        <v-combobox
-          :model-value="tableFilterColumns"
-          :items="tableFilterHeaders"
-          :return-object="false"
-          chips
-          class="table-header-filter-clear"
-          density="compact"
-          hide-details
-          item-value="key"
-          max-width="200"
-          multiple
-          prepend-inner-icon="mdi-filter-cog"
-          @update:model-value="updateTableFilterColumns"
-        >
-          <template #chip="{ item, index }">
-            <v-chip v-if="index === 0">
-              <span>{{ item.title }}</span>
-            </v-chip>
-            <span v-if="index === 1" class="text-grey caption"> (+{{ tableFilterColumns.length - 1 }}) </span>
-          </template>
-        </v-combobox>
-
         <v-spacer />
 
         <v-text-field
@@ -730,9 +586,7 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       <template #item.siteUserConfig.sortIndex="{ item }">
         <div class="d-flex flex-column align-center">
           <v-badge
-            :model-value="
-              configStore.tableBehavior.MyData.columns?.includes('messageCount') && (item.messageCount ?? 0) > 0
-            "
+            :model-value="(item.messageCount ?? 0) > 0"
             :content="(item.messageCount ?? 0) > 10 ? undefined : item.messageCount"
             color="error"
           >
@@ -751,7 +605,11 @@ watch(showEditDialog, (isOpen, wasOpen) => {
       </template>
 
       <template #item.availability="{ item }">
-        <v-chip :color="item.availability === 'ready' ? 'success' : 'warning'" label size="small">
+        <v-chip
+          :color="item.availability === 'ready' ? 'success' : item.availability === 'public' ? 'info' : 'warning'"
+          label
+          size="small"
+        >
           {{ t(`MyData.index.siteAvailability.${item.availability}`) }}
         </v-chip>
       </template>

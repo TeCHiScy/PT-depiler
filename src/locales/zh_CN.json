@@ -220,9 +220,8 @@
       "siteAvailability": {
         "needLogin": "需要登录",
         "needToken": "需要 Token",
-        "notDiscovered": "未发现",
         "public": "公开",
-        "ready": "可用"
+        "ready": "已登录"
       },
       "joinTimeFormat": "入站时间显示",
       "joinTimeFormatOptions": {
@@ -964,7 +963,17 @@
     "parseResultEmpty": "未能解析出结果",
     "pushTo": "推送到...",
     "pushToDefault": "推送到默认下载器",
-    "quickSearch": "快捷搜索"
+    "quickSearch": "快捷搜索",
+    "qbittorrent": {
+      "sites": "站点",
+      "refresh": "刷新",
+      "refreshing": "刷新中…",
+      "empty": "暂无已配置站点",
+      "noUserData": "暂无用户数据",
+      "uploaded": "上传",
+      "downloaded": "下载",
+      "seeding": "做种"
+    }
   },
   "downloaderLabel": {
     "localDownload": "本地下载"

@@ -8,11 +8,14 @@ import type { IMetadataPiniaStorageSchema } from "@/shared/types/storages/metada
 import type { IConfigPiniaStorageSchema } from "@/shared/types/storages/config.ts";
 
 import { mountApp } from "./app/init.ts";
+import { setupQbittorrentBridge } from "./qbittorrent.ts";
 
 sendMessage("getExtStorage", "config").then(async (data) => {
   const configStore = data as IConfigPiniaStorageSchema;
 
   if (configStore?.contentScript?.enabled ?? true) {
+    setupQbittorrentBridge(document);
+
     if (configStore?.contentScript?.enabledAtSocialSite ?? true) {
       for (const [socialSite, patternMatches] of Object.entries(socialPageParserMatchesMap)) {
         for (const [pattern, _] of patternMatches) {
