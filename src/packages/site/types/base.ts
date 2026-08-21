@@ -1,6 +1,7 @@
 // Error classes
 export class CFBlockedError extends Error {}
 export class NeedLoginError extends Error {}
+export class NetworkError extends Error {}
 export class NoTorrentsError extends Error {}
 
 export type TSiteID = string; // should match regexp /[0-9a-z]+/

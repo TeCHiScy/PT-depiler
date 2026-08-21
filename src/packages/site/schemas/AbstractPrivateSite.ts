@@ -10,6 +10,7 @@ import {
   EResultParseStatus,
   CFBlockedError,
   NeedLoginError,
+  NetworkError,
   type IElementQuery,
   type ISiteMetadata,
   type IUserInfo,
@@ -207,11 +208,14 @@ export default class PrivateSite extends BittorrentSite {
         console.error(error);
       }
 
+      // 临时网络失败不应覆盖最近一次成功的用户信息，否则站点会被误判为未登录。
+      if (error instanceof NetworkError || error instanceof CFBlockedError) {
+        throw error;
+      }
+
       flushUserInfo.status = EResultParseStatus.parseError;
 
-      if (error instanceof CFBlockedError) {
-        flushUserInfo.status = EResultParseStatus.CFBlocked;
-      } else if (error instanceof NeedLoginError) {
+      if (error instanceof NeedLoginError) {
         flushUserInfo.status = EResultParseStatus.needLogin;
       }
     }

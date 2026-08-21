@@ -14,6 +14,7 @@ import {
   ITorrent,
   NeedLoginError,
   CFBlockedError,
+  NetworkError,
   NoTorrentsError,
   IAdvanceKeywordSearchConfig,
   ISearchInput,
@@ -40,6 +41,8 @@ export const SchemaMetadata: Partial<ISiteMetadata> = {
   version: -1,
   search: {},
 };
+
+const transientNetworkStatusCodes = new Set([408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524]);
 
 const defaultTorrentSelectorKey = [
   "id",
@@ -147,10 +150,18 @@ export default class BittorrentSite {
     } catch (e) {
       // 从 AxiosError 中获取 response
       req = (e as AxiosError).response!;
+      if (!req) {
+        throw new NetworkError((e as Error).message || "Network request failed");
+      }
     }
 
     if (isCloudflareBlocked(req)) {
       throw new CFBlockedError();
+    }
+
+    // 网关、服务暂时不可用或限流不代表登录态已经失效。
+    if (transientNetworkStatusCodes.has(req.status)) {
+      throw new NetworkError(`Network Error: ${req.status} ${req.statusText || ""}`.trim());
     }
 
     // 随后检查是否需要登录

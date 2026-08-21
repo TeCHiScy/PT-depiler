@@ -1365,7 +1365,19 @@ function ensureQbittorrentBridge(document: Document) {
     "click",
     (event) => {
       const target = (event.target as Element | null)?.closest("li");
-      if (target && target !== tab) deactivateSiteTab();
+      if (!target || target === tab) return;
+
+      // qB 在 window.load 后会等待缓存初始化，再通过 element.click() 恢复原生 Tab。
+      // 如果用户上次停留在站点页，这个程序化点击不能覆盖 PT Depiler 的 Tab 状态；
+      // 用户真实点击原生 Tab 时仍按正常切换逻辑处理。
+      if (!event.isTrusted && localStorage.getItem(QB_SITE_TAB_PREFERENCE_KEY) === "sites") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        restoreSelectedSiteTab();
+        return;
+      }
+
+      deactivateSiteTab();
     },
     true,
   );
